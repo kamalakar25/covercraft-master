@@ -20,6 +20,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import Header from "./Header";
 import MultiStepCheckoutForm from "./multi-step-checkout-form";
 import { products } from "./product";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 function ProductDetail() {
   const { productId } = useParams();
@@ -31,7 +33,6 @@ function ProductDetail() {
   const product = products.find(
     (prod) => prod.id === Number.parseInt(productId)
   );
-  const [isFavorite, setIsFavorite] = useState(false);
   const [openCheckout, setOpenCheckout] = useState(false);
 
   const addToCart = () => {
@@ -57,8 +58,16 @@ function ProductDetail() {
     // Save updated cart back to localStorage
     localStorage.setItem("cart", JSON.stringify(existingCartItems));
 
-    // Navigate to cart page
-    navigate("/cart");
+    // Show success toast
+    toast.success(`${product.name} has been added to your cart!`, {
+      position: "top-right",
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      theme: "colored",
+    });
   };
 
   if (!product) {
@@ -96,7 +105,7 @@ function ProductDetail() {
             alignItems: "center",
           }}
         >
-          <Box sx={{ width: "100%", mb: "2" }} className="mt-5" >
+          <Box sx={{ width: "100%", mb: "2" }} className="mt-5">
             <IconButton onClick={() => navigate(-1)} color="primary">
               <ArrowBack />
             </IconButton>
@@ -119,20 +128,6 @@ function ProductDetail() {
                   position: "relative",
                 }}
               >
-                {/* 
-                <IconButton
-                  onClick={() => setIsFavorite(!isFavorite)}
-                  sx={{
-                    position: 'absolute',
-                    right: 8,
-                    top: 8,
-                    bgcolor: 'background.paper',
-                    '&:hover': { bgcolor: 'background.default' },
-                  }}
-                >
-                  <Favorite color={isFavorite ? 'error' : 'action'} />
-                </IconButton>
-                 */}
                 <Box
                   component={motion.img}
                   whileHover={{ scale: 1.05 }}
@@ -166,18 +161,6 @@ function ProductDetail() {
                   }}
                 >
                   {product.model}
-                  {/* <span
-                    style={{
-                      color: "#888",
-                      background: "linear-gradient(45deg, #f3ec78, #af4261)",
-                      WebkitBackgroundClip: "text",
-                      WebkitTextFillColor: "transparent",
-                      padding: "0.2em 0.4em",
-                      borderRadius: "4px",
-                    }}
-                  >
-                    {product.model}
-                  </span> */}
                 </Typography>
 
                 <Box
@@ -243,42 +226,10 @@ function ProductDetail() {
                       py: 1.5,
                       borderRadius: 2,
                     }}
-                    onClick={() => {
-                      // Open checkout dialog
-                      setOpenCheckout(true);
-                    }}
+                    onClick={() => setOpenCheckout(true)}
                   >
                     Buy Now
                   </Button>
-                </Box>
-
-                {/* Product Features/Highlights */}
-                <Box sx={{ mt: 4 }}>
-                  <Typography variant="h6" gutterBottom>
-                    Product Highlights
-                  </Typography>
-                  <Grid container spacing={2}>
-                    {[
-                      "Premium Quality",
-                      "Easy to Apply",
-                      "Bubble Free",
-                      "Perfect Fit",
-                    ].map((feature, index) => (
-                      <Grid item xs={6} sm={3} key={index}>
-                        <Paper
-                          elevation={1}
-                          sx={{
-                            p: 2,
-                            textAlign: "center",
-                            bgcolor: "background.paper",
-                            borderRadius: 2,
-                          }}
-                        >
-                          <Typography variant="body2">{feature}</Typography>
-                        </Paper>
-                      </Grid>
-                    ))}
-                  </Grid>
                 </Box>
               </Box>
             </Grid>
@@ -291,24 +242,20 @@ function ProductDetail() {
           onClose={() => setOpenCheckout(false)}
           maxWidth="md"
           fullWidth
-          PaperProps={{
-            sx: {
-              width: isXsScreen ? "100%" : "auto",
-              m: isXsScreen ? 0 : 2,
-              maxHeight: isXsScreen ? "100%" : "calc(100% - 64px)",
-            },
-          }}
         >
           <MultiStepCheckoutForm
             product={{
               name: product.name,
               price: product.price,
-              shipping: 9.99, // You can make this dynamic if needed
+              shipping: 9.99,
             }}
             onClose={() => setOpenCheckout(false)}
           />
         </Dialog>
       </Container>
+
+      {/* Toast Container for Notifications */}
+      <ToastContainer />
     </>
   );
 }

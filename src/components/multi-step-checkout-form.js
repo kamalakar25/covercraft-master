@@ -1,6 +1,11 @@
-import React, { useState } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import { Check, CreditCard, LocalShipping, ErrorOutline } from "@mui/icons-material"
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Check,
+  CreditCard,
+  LocalShipping,
+  ErrorOutline,
+} from "@mui/icons-material";
 import {
   Button,
   CardContent,
@@ -18,9 +23,9 @@ import {
   Divider,
   useTheme,
   useMediaQuery,
-} from "@mui/material"
-import { ThemeProvider, createTheme } from "@mui/material/styles"
-import { useNavigate } from "react-router-dom"
+} from "@mui/material";
+import { ThemeProvider, createTheme } from "@mui/material/styles";
+import { useNavigate } from "react-router-dom";
 
 // Enhanced dark theme
 const darkTheme = createTheme({
@@ -63,7 +68,7 @@ const darkTheme = createTheme({
       },
     },
   },
-})
+});
 
 // Animation variants
 const pageVariants = {
@@ -92,7 +97,7 @@ const pageVariants = {
       damping: 20,
     },
   }),
-}
+};
 
 const fadeInUp = {
   initial: { opacity: 0, y: 60 },
@@ -104,11 +109,11 @@ const fadeInUp = {
       ease: [0.6, -0.05, 0.01, 0.99],
     },
   },
-}
+};
 
 export default function MultiStepCheckoutForm({ product, onClose }) {
-  const [step, setStep] = useState(1)
-  const [direction, setDirection] = useState(0)
+  const [step, setStep] = useState(1);
+  const [direction, setDirection] = useState(0);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -122,13 +127,13 @@ export default function MultiStepCheckoutForm({ product, onClose }) {
     cardNumber: "",
     cardExpiry: "",
     cardCvc: "",
-  })
-  const [errors, setErrors] = useState({})
-  const [touched, setTouched] = useState({})
+  });
+  const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
 
-  const theme = useTheme()
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"))
-  const navigate = useNavigate()
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const navigate = useNavigate();
 
   // Validation patterns
   const patterns = {
@@ -139,7 +144,7 @@ export default function MultiStepCheckoutForm({ product, onClose }) {
     cardNumber: /^[\d]{16}$/,
     cardExpiry: /^(0[1-9]|1[0-2])\/([0-9]{2})$/,
     cardCvc: /^[\d]{3,4}$/,
-  }
+  };
 
   // Error messages
   const errorMessages = {
@@ -153,90 +158,105 @@ export default function MultiStepCheckoutForm({ product, onClose }) {
     cardNumber: "Card number must be 16 digits",
     cardExpiry: "Invalid expiry date (MM/YY)",
     cardCvc: "CVC must be 3 or 4 digits",
-  }
+  };
 
   const validateField = (name, value) => {
-    if (!value) return `${name.charAt(0).toUpperCase() + name.slice(1)} is required`
+    if (!value)
+      return `${name.charAt(0).toUpperCase() + name.slice(1)} is required`;
     if (patterns[name] && !patterns[name].test(value.replace(/\s/g, ""))) {
-      return errorMessages[name]
+      return errorMessages[name];
     }
-    if (name === "address" && value.length < 10) return errorMessages.address
+    if (name === "address" && value.length < 10) return errorMessages.address;
     if (name === "cardExpiry") {
-      const [month, year] = value.split("/")
-      const expiryDate = new Date(2000 + Number.parseInt(year), Number.parseInt(month) - 1)
+      const [month, year] = value.split("/");
+      const expiryDate = new Date(
+        2000 + Number.parseInt(year),
+        Number.parseInt(month) - 1
+      );
       if (expiryDate <= new Date()) {
-        return "Expiry date must be in the future"
+        return "Expiry date must be in the future";
       }
     }
-    return ""
-  }
+    return "";
+  };
 
   const handleBlur = (field) => {
-    setTouched((prev) => ({ ...prev, [field]: true }))
-    const error = validateField(field, formData[field])
-    setErrors((prev) => ({ ...prev, [field]: error }))
-  }
+    setTouched((prev) => ({ ...prev, [field]: true }));
+    const error = validateField(field, formData[field]);
+    setErrors((prev) => ({ ...prev, [field]: error }));
+  };
 
   const validateStep = (stepNumber) => {
-    const newErrors = {}
-    let isValid = true
+    const newErrors = {};
+    let isValid = true;
 
     if (stepNumber === 1) {
-      ;["name", "email", "phone", "address", "city", "state", "zipCode"].forEach((field) => {
-        const error = validateField(field, formData[field])
-        if (error) {
-          newErrors[field] = error
-          isValid = false
+      ["name", "email", "phone", "address", "city", "state", "zipCode"].forEach(
+        (field) => {
+          const error = validateField(field, formData[field]);
+          if (error) {
+            newErrors[field] = error;
+            isValid = false;
+          }
         }
-      })
+      );
     }
 
     if (stepNumber === 2) {
       if (!formData.paymentMethod) {
-        newErrors.paymentMethod = "Please select a payment method"
-        isValid = false
+        newErrors.paymentMethod = "Please select a payment method";
+        isValid = false;
       }
     }
 
     if (stepNumber === 3 && formData.paymentMethod === "card") {
       if (!formData.cardType) {
-        newErrors.cardType = "Please select a card type"
-        isValid = false
+        newErrors.cardType = "Please select a card type";
+        isValid = false;
       }
     }
 
     if (stepNumber === 4 && formData.paymentMethod === "card") {
-      ;["cardNumber", "cardExpiry", "cardCvc"].forEach((field) => {
-        const error = validateField(field, formData[field])
+      ["cardNumber", "cardExpiry", "cardCvc"].forEach((field) => {
+        const error = validateField(field, formData[field]);
         if (error) {
-          newErrors[field] = error
-          isValid = false
+          newErrors[field] = error;
+          isValid = false;
         }
-      })
+      });
     }
 
-    setErrors(newErrors)
-    return isValid
-  }
+    setErrors(newErrors);
+    return isValid;
+  };
 
   const handleNext = () => {
-    if (step === 1 && !validateStep(1)) return
-    if (step === 2 && !validateStep(2)) return
-    if (step === 3 && formData.paymentMethod === "card" && !validateStep(3)) return
-    if (step === 4 && formData.paymentMethod === "card" && !validateStep(4)) return
+    if (step === 1 && !validateStep(1)) return;
+    if (step === 2 && !validateStep(2)) return;
+    if (step === 3 && formData.paymentMethod === "card" && !validateStep(3))
+      return;
+    if (step === 4 && formData.paymentMethod === "card" && !validateStep(4))
+      return;
 
-    setDirection(1)
-    setStep((prev) => prev + 1)
-  }
+    if (
+      (step === 3 && formData.paymentMethod === "cod") ||
+      (step === 5 && formData.paymentMethod === "card")
+    ) {
+      saveOrder();
+    }
+
+    setDirection(1);
+    setStep((prev) => prev + 1);
+  };
 
   const handleBack = () => {
-    setDirection(-1)
-    setStep((prev) => prev - 1)
-  }
+    setDirection(-1);
+    setStep((prev) => prev - 1);
+  };
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target
-    let formattedValue = value
+    const { name, value } = e.target;
+    let formattedValue = value;
 
     // Format specific fields
     switch (name) {
@@ -244,41 +264,64 @@ export default function MultiStepCheckoutForm({ product, onClose }) {
         formattedValue = value
           .replace(/\s/g, "")
           .replace(/(\d{4})/g, "$1 ")
-          .trim()
-        break
+          .trim();
+        break;
       case "cardExpiry":
         formattedValue = value
           .replace(/\D/g, "")
           .replace(/(\d{2})(\d)/, "$1/$2")
-          .slice(0, 5)
-        break
+          .slice(0, 5);
+        break;
       case "phone":
-        formattedValue = value.replace(/\D/g, "").slice(0, 10)
-        break
+        formattedValue = value.replace(/\D/g, "").slice(0, 10);
+        break;
       case "zipCode":
-        formattedValue = value.replace(/\D/g, "").slice(0, 6)
-        break
+        formattedValue = value.replace(/\D/g, "").slice(0, 6);
+        break;
       default:
-        break
+        break;
     }
 
     setFormData((prev) => ({
       ...prev,
       [name]: formattedValue,
-    }))
+    }));
 
     if (touched[name]) {
-      const error = validateField(name, formattedValue)
-      setErrors((prev) => ({ ...prev, [name]: error }))
+      const error = validateField(name, formattedValue);
+      setErrors((prev) => ({ ...prev, [name]: error }));
     }
-  }
+  };
 
-const clearLocalStorage = () => {
-  localStorage.removeItem("cart");
-  onClose();
-  navigate("/"); // Navigate to the homepage
-};
+  const clearLocalStorage = () => {
+    localStorage.removeItem("cart");
+    onClose();
+    navigate("/"); // Navigate to the homepage
+  };
 
+  const saveOrder = () => {
+    const orderId = `ORD-${Date.now()}`;
+    const newOrder = {
+      orderId,
+      orderDate: new Date().toISOString(),
+      firstName: formData.name.split(" ")[0],
+      lastName: formData.name.split(" ").slice(1).join(" "),
+      product: {
+        name: product.name,
+        price: product.price,
+      },
+      status: "Processing",
+    };
+
+    // Get existing orders from localStorage
+    const existingOrders = JSON.parse(localStorage.getItem("orders") || "[]");
+
+    // Add new order to the list
+    const updatedOrders = [...existingOrders, newOrder];
+
+    // Save updated orders to localStorage
+    localStorage.setItem("orders", JSON.stringify(updatedOrders));
+  };
 
   const renderCardTypeSelection = () => (
     <motion.div variants={fadeInUp}>
@@ -287,32 +330,44 @@ const clearLocalStorage = () => {
           Select Card Type
         </Typography>
         <FormControl component="fieldset" error={!!errors.cardType}>
-          <RadioGroup name="cardType" value={formData.cardType} onChange={handleInputChange}>
-            {["Visa", "MasterCard", "American Express", "Discover"].map((type) => (
-              <motion.div key={type} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                <Paper
-                  sx={{
-                    mb: 2,
-                    p: { xs: 2, sm: 3 },
-                    transition: "all 0.3s ease",
-                    "&:hover": {
-                      bgcolor: "action.hover",
-                    },
-                  }}
+          <RadioGroup
+            name="cardType"
+            value={formData.cardType}
+            onChange={handleInputChange}
+          >
+            {["Visa", "MasterCard", "American Express", "Discover"].map(
+              (type) => (
+                <motion.div
+                  key={type}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                 >
-                  <FormControlLabel
-                    value={type}
-                    control={<Radio />}
-                    label={
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                        <CreditCard />
-                        <Typography>{type}</Typography>
-                      </Box>
-                    }
-                  />
-                </Paper>
-              </motion.div>
-            ))}
+                  <Paper
+                    sx={{
+                      mb: 2,
+                      p: { xs: 2, sm: 3 },
+                      transition: "all 0.3s ease",
+                      "&:hover": {
+                        bgcolor: "action.hover",
+                      },
+                    }}
+                  >
+                    <FormControlLabel
+                      value={type}
+                      control={<Radio />}
+                      label={
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                        >
+                          <CreditCard />
+                          <Typography>{type}</Typography>
+                        </Box>
+                      }
+                    />
+                  </Paper>
+                </motion.div>
+              )
+            )}
           </RadioGroup>
           {errors.cardType && (
             <Typography variant="caption" color="error">
@@ -322,7 +377,7 @@ const clearLocalStorage = () => {
         </FormControl>
       </Box>
     </motion.div>
-  )
+  );
 
   return (
     <ThemeProvider theme={darkTheme}>
@@ -963,4 +1018,3 @@ const clearLocalStorage = () => {
     </ThemeProvider>
   );
 }
-

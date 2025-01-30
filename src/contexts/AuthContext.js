@@ -1,10 +1,5 @@
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  useRef,
-} from "react";
+import { createContext, useContext, useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom"; // Add this import for navigation
 
 const AuthContext = createContext();
 
@@ -15,14 +10,51 @@ export function AuthProvider({ children }) {
   });
 
   const logoutTimerRef = useRef(null);
+  const navigate = useNavigate(); // Initialize useNavigate
 
-  // Function to handle user login
-  const login = async (userData) => {
-    setUser(userData);
-    resetAutoLogoutTimer();
+  const defaultAdmin = {
+    email: "admin@example.com", // Default admin email
+    password: "admin123", // Default admin password
+    role: "admin", // Default admin role
   };
 
-  // Function to handle user logout
+const login = async (userData) => {
+  // Check if the email and password match the default admin credentials
+  if (
+    userData.email === defaultAdmin.email &&
+    userData.password === defaultAdmin.password
+  ) {
+    const userWithRole = {
+      ...userData,
+      role: defaultAdmin.role, // Set role to admin
+    };
+
+    setUser(userWithRole);
+    localStorage.setItem("user", JSON.stringify(userWithRole));
+    resetAutoLogoutTimer();
+
+    // Redirect to the admin page
+    navigate("/admin"); // Redirect to the admin page
+    return; // Exit early if it's the admin login
+  }
+
+  // For all other users
+  const userWithRole = {
+    ...userData,
+    role: userData.email.includes("admin") ? "admin" : "user",
+  };
+
+  setUser(userWithRole);
+  localStorage.setItem("user", JSON.stringify(userWithRole));
+  resetAutoLogoutTimer();
+
+  // If it's a regular user, redirect to home or other page
+  if (userWithRole.role === "user") {
+    navigate("/"); // Redirect to home page for regular users
+  }
+};
+
+
   const logout = () => {
     setUser(null);
     localStorage.removeItem("user");
@@ -32,7 +64,6 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // Reset auto-logout timer
   const resetAutoLogoutTimer = () => {
     if (logoutTimerRef.current) {
       clearTimeout(logoutTimerRef.current);
@@ -43,28 +74,23 @@ export function AuthProvider({ children }) {
     }, 60 * 1000); // 1 minute
   };
 
-  // Function to handle user activity
   const handleUserActivity = () => {
     if (user) {
       resetAutoLogoutTimer();
     }
   };
 
-  // Add event listeners for user activity
   useEffect(() => {
     if (user) {
       resetAutoLogoutTimer();
 
-      // Events that reset the timer
       const events = ["mousemove", "keydown", "scroll", "click"];
       events.forEach((event) =>
         window.addEventListener(event, handleUserActivity)
       );
 
-      // Listen for visibility change (e.g., when the user switches tabs)
       document.addEventListener("visibilitychange", handleUserActivity);
 
-      // Cleanup listeners on unmount
       return () => {
         events.forEach((event) =>
           window.removeEventListener(event, handleUserActivity)
@@ -75,7 +101,7 @@ export function AuthProvider({ children }) {
         }
       };
     }
-  }, [user]);
+  }, [user, handleUserActivity]);
 
   return (
     <AuthContext.Provider value={{ user, login, logout }}>

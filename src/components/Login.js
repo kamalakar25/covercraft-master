@@ -71,7 +71,10 @@ const Login = () => {
         window.removeEventListener("mousemove", resetLogoutTimer);
         window.removeEventListener("keydown", resetLogoutTimer);
         window.removeEventListener("click", resetLogoutTimer);
-        document.removeEventListener("visibilitychange", handleVisibilityChange);
+        document.removeEventListener(
+          "visibilitychange",
+          handleVisibilityChange
+        );
         clearTimeout(logoutTimerRef.current);
       };
     }
@@ -102,9 +105,19 @@ const Login = () => {
   const onSubmit = async (data) => {
     try {
       const userData = { email: data.email, name: data.email.split("@")[0] };
+
+      // Handle login
       await login(userData);
-      localStorage.setItem("user", JSON.stringify(userData)); // Persist user to localStorage
-      navigate("/");
+
+      // Persist the user to localStorage
+      localStorage.setItem("user", JSON.stringify(userData));
+
+      // Navigate based on user role
+      if (userData.email === "admin@example.com") {
+        navigate("/admin"); // Redirect to the admin page if it's the admin user
+      } else {
+        navigate("/"); // Regular users go to the home page
+      }
     } catch (error) {
       console.error("Login failed:", error);
     }

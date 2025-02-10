@@ -1,114 +1,157 @@
-import { createContext, useContext, useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom"; // Add this import for navigation
+// src/contexts/AuthContext.js
+import React, { createContext, useState, useContext } from "react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import { useEffect, useRef } from "react";
 
-const AuthContext = createContext();
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
 
-export function AuthProvider({ children }) {
-  const [user, setUser] = useState(() => {
-    const savedUser = localStorage.getItem("user");
-    return savedUser ? JSON.parse(savedUser) : null;
-  });
+const AuthContext = createContext(null);
 
-  const logoutTimerRef = useRef(null);
-  const navigate = useNavigate(); // Initialize useNavigate
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [lastActivity, setLastActivity] = useState(Date.now());
+  const inactivityTimeoutRef = useRef(null);
+  const loginTimeoutRef = useRef(null);
+  const navigate = useNavigate();
 
-  const defaultAdmin = {
-    email: "admin@example.com", // Default admin email
-    password: "admin123", // Default admin password
-    role: "admin", // Default admin role
+  const login = async (email, password) => {
+    try {
+      const response = await axios.post(`${API_URL}/auth/login`, {
+        email,
+        password,
+      });
+
+      const { user, token } = response.data;
+
+      localStorage.setItem("token", token);
+      localStorage.setItem("userEmail", user.email);
+      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+
+      setUser(user);
+      setLastActivity(Date.now());
+
+      // Set login timeout
+      loginTimeoutRef.current = setTimeout(() => {
+        logout();
+        navigate("/login");
+      }, 60000); // 1 minute
+
+      resetInactivityTimeout();
+      return user;
+    } catch (error) {
+      throw new Error(error.response?.data?.error || "Login failed");
+    }
   };
 
-const login = async (userData) => {
-  // Check if the email and password match the default admin credentials
-  if (
-    userData.email === defaultAdmin.email &&
-    userData.password === defaultAdmin.password
-  ) {
-    const userWithRole = {
-      ...userData,
-      role: defaultAdmin.role, // Set role to admin
+  const signup = async (userData) => {
+    try {
+      const response = await axios.post(`${API_URL}/auth/signup`, userData);
+
+      const { user, token } = response.data;
+
+      // Store token in localStorage
+      localStorage.setItem("token", token);
+
+      // Set axios default header for future requests
+      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+
+      setUser(user);
+      return user;
+    } catch (error) {
+      throw new Error(error.response?.data?.error || "Signup failed");
+    }
+  };
+
+  const logout = async () => {
+    try {
+      await axios.post(`${API_URL}/auth/logout`);
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      // Clear token and user data
+      localStorage.removeItem("token");
+      delete axios.defaults.headers.common["Authorization"];
+      setUser(null);
+      if (inactivityTimeoutRef.current) {
+        clearTimeout(inactivityTimeoutRef.current);
+      }
+      if (loginTimeoutRef.current) {
+        clearTimeout(loginTimeoutRef.current);
+      }
+    }
+  };
+
+  const checkAuth = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+
+      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+      const response = await axios.get(`${API_URL}/auth/me`);
+      setUser(response.data.user);
+    } catch (error) {
+      localStorage.removeItem("token");
+      delete axios.defaults.headers.common["Authorization"];
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resetInactivityTimeout = () => {
+    if (inactivityTimeoutRef.current) {
+      clearTimeout(inactivityTimeoutRef.current);
+    }
+    if (user) {
+      inactivityTimeoutRef.current = setTimeout(() => {
+        logout();
+        navigate("/login");
+      }, 60000); // 1 minute
+    }
+  };
+
+  React.useEffect(() => {
+    checkAuth();
+  }, []);
+
+  useEffect(() => {
+    const handleActivity = () => {
+      setLastActivity(Date.now());
+      resetInactivityTimeout();
     };
 
-    setUser(userWithRole);
-    localStorage.setItem("user", JSON.stringify(userWithRole));
-    resetAutoLogoutTimer();
+    window.addEventListener("mousemove", handleActivity);
+    window.addEventListener("keydown", handleActivity);
 
-    // Redirect to the admin page
-    navigate("/admin"); // Redirect to the admin page
-    return; // Exit early if it's the admin login
-  }
-
-  // For all other users
-  const userWithRole = {
-    ...userData,
-    role: userData.email.includes("admin") ? "admin" : "user",
-  };
-
-  setUser(userWithRole);
-  localStorage.setItem("user", JSON.stringify(userWithRole));
-  resetAutoLogoutTimer();
-
-  // If it's a regular user, redirect to home or other page
-  if (userWithRole.role === "user") {
-    navigate("/"); // Redirect to home page for regular users
-  }
-};
-
-
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem("user");
-    if (logoutTimerRef.current) {
-      clearTimeout(logoutTimerRef.current);
-      logoutTimerRef.current = null;
-    }
-  };
-
-  const resetAutoLogoutTimer = () => {
-    if (logoutTimerRef.current) {
-      clearTimeout(logoutTimerRef.current);
-    }
-    logoutTimerRef.current = setTimeout(() => {
-      logout();
-      alert("You have been logged out due to inactivity.");
-    }, 60 * 1000); // 1 minute
-  };
-
-  const handleUserActivity = () => {
-    if (user) {
-      resetAutoLogoutTimer();
-    }
-  };
+    return () => {
+      window.removeEventListener("mousemove", handleActivity);
+      window.removeEventListener("keydown", handleActivity);
+    };
+  }, [user]);
 
   useEffect(() => {
     if (user) {
-      resetAutoLogoutTimer();
-
-      const events = ["mousemove", "keydown", "scroll", "click"];
-      events.forEach((event) =>
-        window.addEventListener(event, handleUserActivity)
-      );
-
-      document.addEventListener("visibilitychange", handleUserActivity);
-
-      return () => {
-        events.forEach((event) =>
-          window.removeEventListener(event, handleUserActivity)
-        );
-        document.removeEventListener("visibilitychange", handleUserActivity);
-        if (logoutTimerRef.current) {
-          clearTimeout(logoutTimerRef.current);
-        }
-      };
+      resetInactivityTimeout();
     }
-  }, [user, handleUserActivity]);
+    return () => {
+      if (inactivityTimeoutRef.current) {
+        clearTimeout(inactivityTimeoutRef.current);
+      }
+    };
+  }, [user, lastActivity]);
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider
+      value={{ user, login, logout, signup, loading, resetInactivityTimeout }}
+    >
       {children}
     </AuthContext.Provider>
   );
-}
+};
 
 export const useAuth = () => {
   const context = useContext(AuthContext);

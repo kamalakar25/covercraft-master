@@ -1,5 +1,5 @@
-// FilteredProducts.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import {
   Box,
   Typography,
@@ -10,79 +10,121 @@ import {
   Button,
   useMediaQuery,
   useTheme,
-} from '@mui/material';
-import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
-import { products } from './product';
+  CircularProgress,
+} from "@mui/material";
+import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
+const API_BASE_URL =
+  process.env.REACT_APP_API_URL || "http://localhost:5000/api";
 
 function ProductShowcase({ category }) {
   const navigate = useNavigate();
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'));
-  const [filteredProducts, setFilteredProducts] = useState([]);
-  const [cart, setCart] = useState([]);
-
-  // Mapping for category to product range
-  const categoryRanges = {
-    'New Arrivals': [0, 4],
-    'Best Sellers': [4, 8],
-    'Collections': [8, 12],
-    'Customized': [12, 16],
-    'iPhone': [7, 11],
-    'Samsung': [17, 20]
-  };
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const isTablet = useMediaQuery(theme.breakpoints.between("sm", "md"));
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Get the range for the selected category
-    const range = categoryRanges[category] || [0, products.length];
-    
-    // Filter products based on the range
-    const filtered = products.slice(range[0], range[1]);
-    setFilteredProducts(filtered);
+    fetchProducts();
   }, [category]);
+
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(`${API_BASE_URL}/products`);
+      setProducts(response.data);
+      setError(null);
+    } catch (err) {
+      setError("Failed to fetch products. Please try again later.");
+      toast.error("Error loading products");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleCardClick = (productId) => {
     navigate(`/product/${productId}`);
   };
 
-const handleAddToCart = (event, product) => {
-  event.stopPropagation();
-  setCart((prevCart) => {
-    const updatedCart = [...prevCart];
-    const existingItemIndex = updatedCart.findIndex(
-      (item) => item.id === product.id
-    );
-    if (existingItemIndex !== -1) {
-      updatedCart[existingItemIndex].quantity += 1;
-    } else {
-      updatedCart.push({ ...product, quantity: 1 });
+  const handleAddToCart = async (event, product) => {
+    event.stopPropagation();
+
+    try {
+      const userEmail = localStorage.getItem("userEmail"); // Get email from localStorage or auth system
+
+      if (!userEmail) {
+        toast.error("User not logged in!");
+        return;
+      }
+
+      // Fetch userId using email
+      const userResponse = await axios.get(
+        `${API_BASE_URL}/users/getUserId/${userEmail}`
+      );
+      const userId = userResponse.data.userId;
+
+      if (!userId) {
+        toast.error("User ID not found!");
+        return;
+      }
+
+      // Add to cart
+      await axios.post(`${API_BASE_URL}/cart/add`, {
+        userId,
+        productId: product._id,
+        quantity: 1,
+      });
+
+      toast.success(`${product.name} added to cart!`, {
+        position: "bottom-center",
+        autoClose: 3000,
+        hideProgressBar: true,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: "light",
+      });
+    } catch (error) {
+      toast.error("Failed to add item to cart");
     }
-    localStorage.setItem("cart", JSON.stringify(updatedCart));
-    return updatedCart;
-  });
-
-  // Show toast notification
-  toast.success(`${product.name} added to cart!`, {
-    position: "bottom-center",
-    autoClose: 3000,
-    hideProgressBar: true,
-    closeOnClick: true,
-    pauseOnHover: true,
-    draggable: true,
-    theme: "light",
-  });
-};
-
+  };
 
   const getGridSize = () => {
-    if (isMobile) return 6; // 2 cards in a row
-    if (isTablet) return 4; // 3 cards in a row
-    return 3; // 4 cards in a row for larger screens
+    if (isMobile) return 6;
+    if (isTablet) return 4;
+    return 3;
   };
+
+  if (loading) {
+    return (
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        minHeight="400px"
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        minHeight="400px"
+      >
+        <Typography color="error">{error}</Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box
@@ -112,8 +154,8 @@ const handleAddToCart = (event, product) => {
         spacing={2}
         sx={{ display: "flex", justifyContent: "center" }}
       >
-        {filteredProducts.map((product, index) => (
-          <Grid item xs={6} sm={4} md={getGridSize()} key={product.id}>
+        {products.map((product, index) => (
+          <Grid item xs={6} sm={4} md={getGridSize()} key={product._id}>
             <motion.div
               initial={{ opacity: 0, y: 50 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -121,7 +163,7 @@ const handleAddToCart = (event, product) => {
               viewport={{ once: true }}
             >
               <Card
-                onClick={() => handleCardClick(product.id)}
+                onClick={() => handleCardClick(product._id)}
                 sx={{
                   bgcolor: "background.paper",
                   borderRadius: 3,
@@ -149,9 +191,14 @@ const handleAddToCart = (event, product) => {
                       transform: "scale(1.03)",
                     },
                   }}
-                  image={product.image}
+                  image={
+                    product.image.startsWith("http")
+                      ? product.image
+                      : `/assets/images/${product.image}.jpg`
+                  }
                   alt={product.name}
                 />
+
                 <CardContent
                   sx={{
                     flexGrow: 1,
@@ -175,11 +222,9 @@ const handleAddToCart = (event, product) => {
                       mb: 1,
                       overflow: "hidden",
                       textOverflow: "ellipsis",
-                      // whiteSpace: 'nowrap',
                       fontSize: { xs: "1rem", sm: "1.2rem" },
                     }}
                   >
-                    {/* {product.name}{' '} */}
                     <span
                       style={{
                         fontSize: "0.8rem",
@@ -277,6 +322,5 @@ const handleAddToCart = (event, product) => {
     </Box>
   );
 }
-
 
 export default ProductShowcase;

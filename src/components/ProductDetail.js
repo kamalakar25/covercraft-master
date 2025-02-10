@@ -1,4 +1,4 @@
-import { ArrowBack, Favorite, ShoppingCart } from "@mui/icons-material";
+import { ArrowBack, ShoppingCart } from "@mui/icons-material";
 import {
   Box,
   Button,
@@ -13,15 +13,20 @@ import {
   Typography,
   useMediaQuery,
   useTheme,
+  CircularProgress,
+  Alert,
 } from "@mui/material";
-import { motion } from "framer-motion";
-import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import axios from "axios";
 import Header from "./Header";
-import MultiStepCheckoutForm from "./multi-step-checkout-form";
-import { products } from "./product";
+import MultiStepCheckoutForm from "./MultiStepCheckoutForm";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+
+const API_BASE_URL =
+  process.env.REACT_APP_API_URL || "http://localhost:5000/api";
 
 function ProductDetail() {
   const { productId } = useParams();
@@ -30,58 +35,113 @@ function ProductDetail() {
   const isXsScreen = useMediaQuery(theme.breakpoints.down("sm"));
   const isLargeScreen = useMediaQuery("(min-width:2000px)");
 
-  const product = products.find(
-    (prod) => prod.id === Number.parseInt(productId)
-  );
+  const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [openCheckout, setOpenCheckout] = useState(false);
 
-  const addToCart = () => {
-    // Retrieve existing cart items from localStorage
-    const existingCartItems = JSON.parse(localStorage.getItem("cart") || "[]");
+  useEffect(() => {
+    fetchProductDetails();
+  }, [productId]);
 
-    // Check if product already exists in cart
-    const existingProductIndex = existingCartItems.findIndex(
-      (item) => item.id === product.id
-    );
+  const fetchProductDetails = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(
+        `${API_BASE_URL}/products/detail/${productId}`
+      );
+      setProduct(response.data);
+      setError(null);
+    } catch (err) {
+      setError("Failed to fetch product details. Please try again later.");
+      toast.error("Error loading product details");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    if (existingProductIndex > -1) {
-      // If product exists, increment quantity
-      existingCartItems[existingProductIndex].quantity += 1;
-    } else {
-      // If product doesn't exist, add new product with quantity 1
-      existingCartItems.push({
-        ...product,
-        quantity: 1,
-      });
+const addToCart = async () => {
+  try {
+    const userEmail = localStorage.getItem("userEmail"); // Get email from localStorage or auth system
+
+    if (!userEmail) {
+      toast.error("User not logged in!");
+      return;
     }
 
-    // Save updated cart back to localStorage
-    localStorage.setItem("cart", JSON.stringify(existingCartItems));
+    // Fetch userId using email
+    const userResponse = await axios.get(
+      `${API_BASE_URL}/users/getUserId/${userEmail}`
+    );
+    const userId = userResponse.data.userId;
 
-    // Show success toast
-    toast.success(`${product.name} has been added to your cart!`, {
-      position: "top-right",
+    if (!userId) {
+      toast.error("User ID not found!");
+      return;
+    }
+
+    // Add to cart
+    await axios.post(`${API_BASE_URL}/cart/add`, {
+      userId,
+      productId: product._id,
+      quantity: 1,
+    });
+
+    toast.success(`${product.name} added to cart!`, {
+      position: "bottom-center",
       autoClose: 3000,
-      hideProgressBar: false,
+      hideProgressBar: true,
       closeOnClick: true,
       pauseOnHover: true,
       draggable: true,
-      theme: "colored",
+      theme: "light",
     });
-  };
+  } catch (error) {
+    toast.error("Failed to add item to cart");
+  }
+};
 
-  if (!product) {
+  if (loading) {
     return (
-      <Typography variant="h5" color="error" textAlign="center">
-        Product not found.
-      </Typography>
+      <>
+        <Header />
+        <Container
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            minHeight: "60vh",
+          }}
+        >
+          <CircularProgress />
+        </Container>
+      </>
+    );
+  }
+
+  if (error || !product) {
+    return (
+      <>
+        <Header />
+        <Container
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            minHeight: "60vh",
+          }}
+        >
+          <Alert severity="error" sx={{ width: "100%", maxWidth: "sm" }}>
+            {error || "Product not found."}
+          </Alert>
+        </Container>
+      </>
     );
   }
 
   return (
     <>
       <Header />
-
       <Container
         maxWidth={false}
         sx={{
@@ -105,7 +165,7 @@ function ProductDetail() {
             alignItems: "center",
           }}
         >
-          <Box sx={{ width: "100%", mb: "2" }} className="mt-5">
+          <Box sx={{ width: "100%", mb: 2 }} className="mt-5">
             <IconButton onClick={() => navigate(-1)} color="primary">
               <ArrowBack />
             </IconButton>
@@ -132,7 +192,11 @@ function ProductDetail() {
                   component={motion.img}
                   whileHover={{ scale: 1.05 }}
                   transition={{ duration: 0.3 }}
-                  src={product.image}
+                  src={
+                    product.image.startsWith("http")
+                      ? product.image
+                      : `/assets/images/${product.image}.jpg`
+                  } // Use absolute path from 'public'
                   alt={product.name}
                   sx={{
                     width: "100%",
@@ -166,15 +230,19 @@ function ProductDetail() {
                 <Box
                   sx={{ mb: 3, display: "flex", alignItems: "center", gap: 1 }}
                 >
-                  <Rating value={4.5} readOnly precision={0.5} />
+                  <Rating
+                    value={product.rating || 4.5}
+                    readOnly
+                    precision={0.5}
+                  />
                   <Typography variant="body2" color="text.secondary">
-                    (124 reviews)
+                    ({product.reviews || 0} reviews)
                   </Typography>
                 </Box>
 
                 <Chip
-                  label="In Stock"
-                  color="success"
+                  label={product.inStock ? "In Stock" : "Out of Stock"}
+                  color={product.inStock ? "success" : "error"}
                   size="small"
                   sx={{ mb: 3 }}
                 />
@@ -188,8 +256,18 @@ function ProductDetail() {
                     fontSize: { xs: "1.5rem", sm: "1.75rem", md: "2rem" },
                   }}
                 >
-                  ₹{product.price || "Price not available"}
+                  ₹{product.price.toFixed(2)}
                 </Typography>
+
+                {product.discountPrice && (
+                  <Typography
+                    variant="body1"
+                    color="error"
+                    sx={{ mb: 1, textDecoration: "line-through" }}
+                  >
+                    ₹{product.discountPrice.toFixed(2)}
+                  </Typography>
+                )}
 
                 <Divider sx={{ my: 3 }} />
 
@@ -198,7 +276,7 @@ function ProductDetail() {
                   color="text.secondary"
                   sx={{ mb: 4, lineHeight: 1.8 }}
                 >
-                  {product.name || "No description available"}
+                  {product.description}
                 </Typography>
 
                 <Box sx={{ display: "flex", gap: 2 }}>
@@ -214,6 +292,7 @@ function ProductDetail() {
                       boxShadow: "0 4px 6px rgba(187, 134, 252, 0.25)",
                     }}
                     onClick={addToCart}
+                    disabled={!product.inStock}
                   >
                     Add to Cart
                   </Button>
@@ -227,6 +306,7 @@ function ProductDetail() {
                       borderRadius: 2,
                     }}
                     onClick={() => setOpenCheckout(true)}
+                    disabled={!product.inStock}
                   >
                     Buy Now
                   </Button>

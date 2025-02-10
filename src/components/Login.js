@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useRef } from "react";
+// src/components/Login.js
+import { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
@@ -12,14 +13,13 @@ import {
   IconButton,
   useMediaQuery,
   useTheme,
+  Alert,
 } from "@mui/material";
 import { Visibility, VisibilityOff, Email, Lock } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import AuthLayout from "./AuthLayout";
 import { motion } from "framer-motion";
-
-const AUTO_LOGOUT_TIME = 60 * 1000; // 1 minute in milliseconds
 
 const schema = yup.object().shape({
   email: yup
@@ -36,90 +36,55 @@ const Login = () => {
   const {
     control,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors },
+    setError,
   } = useForm({
     resolver: yupResolver(schema),
+    mode: "onChange",
   });
 
-  const { login, logout, user } = useAuth();
+  const { login, resetInactivityTimeout } = useAuth();
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   const [showPassword, setShowPassword] = useState(false);
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true); // New state for auth check
-  const logoutTimerRef = useRef(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setGlobalError] = useState("");
 
-  useEffect(() => {
-    // Check localStorage for existing user on component mount
-    const savedUser = localStorage.getItem("user");
-    if (savedUser && !user) {
-      const userData = JSON.parse(savedUser);
-      login(userData);
-    }
-
-    setIsCheckingAuth(false); // Auth check complete
-
-    if (user) {
-      resetLogoutTimer();
-      window.addEventListener("mousemove", resetLogoutTimer);
-      window.addEventListener("keydown", resetLogoutTimer);
-      window.addEventListener("click", resetLogoutTimer);
-      document.addEventListener("visibilitychange", handleVisibilityChange);
-
-      return () => {
-        window.removeEventListener("mousemove", resetLogoutTimer);
-        window.removeEventListener("keydown", resetLogoutTimer);
-        window.removeEventListener("click", resetLogoutTimer);
-        document.removeEventListener(
-          "visibilitychange",
-          handleVisibilityChange
-        );
-        clearTimeout(logoutTimerRef.current);
-      };
-    }
-  }, [user, login]);
-
-  const handleVisibilityChange = () => {
-    if (document.visibilityState === "visible") {
-      resetLogoutTimer();
-    }
-  };
-
-  const resetLogoutTimer = () => {
-    if (logoutTimerRef.current) {
-      clearTimeout(logoutTimerRef.current);
-    }
-    logoutTimerRef.current = setTimeout(() => {
-      handleLogout();
-    }, AUTO_LOGOUT_TIME);
-  };
-
-  const handleLogout = () => {
-    logout();
-    localStorage.removeItem("user");
-    navigate("/login");
-    alert("You have been logged out due to inactivity.");
-  };
+  // If user is already logged in, redirect to home
 
   const onSubmit = async (data) => {
     try {
-      const userData = { email: data.email, name: data.email.split("@")[0] };
+      setIsSubmitting(true);
+      setGlobalError("");
 
-      // Handle login
-      await login(userData);
+      const user = await login(data.email, data.password);
 
-      // Persist the user to localStorage
-      localStorage.setItem("user", JSON.stringify(userData));
+      // Reset inactivity timeout after successful login
+      resetInactivityTimeout();
 
-      // Navigate based on user role
-      if (userData.email === "admin@example.com") {
-        navigate("/admin"); // Redirect to the admin page if it's the admin user
+      // Check user role and navigate accordingly
+      if (user.role === "admin") {
+        // navigate("/admin");
+        navigate("/admin", { replace: true });
       } else {
-        navigate("/"); // Regular users go to the home page
+        navigate("/", { replace: true });
       }
-    } catch (error) {
-      console.error("Login failed:", error);
+    } catch (err) {
+      setGlobalError(err.message || "Login failed. Please try again.");
+
+      // Set field-specific errors if they exist
+      if (err.response?.data?.errors) {
+        Object.keys(err.response.data.errors).forEach((key) => {
+          setError(key, {
+            type: "manual",
+            message: err.response.data.errors[key],
+          });
+        });
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -132,23 +97,19 @@ const Login = () => {
     },
   };
 
-  // Show a loading state while checking authentication
-  if (isCheckingAuth) {
-    return <Typography align="center">Checking authentication...</Typography>;
-  }
-
-  // Redirect to home if user is already logged in
-  if (user) {
-    navigate("/");
-    return null;
-  }
-
   return (
     <AuthLayout>
       <motion.div initial="hidden" animate="visible" variants={formAnimation}>
         <Typography component="h1" variant="h4" gutterBottom align="center">
           Log In
         </Typography>
+
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
+
         <Box
           component="form"
           onSubmit={handleSubmit(onSubmit)}
@@ -176,6 +137,7 @@ const Login = () => {
                 autoFocus
                 error={!!errors.email}
                 helperText={errors.email?.message}
+                disabled={isSubmitting}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -186,6 +148,7 @@ const Login = () => {
               />
             )}
           />
+
           <Controller
             name="password"
             control={control}
@@ -202,6 +165,7 @@ const Login = () => {
                 autoComplete="current-password"
                 error={!!errors.password}
                 helperText={errors.password?.message}
+                disabled={isSubmitting}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -214,6 +178,7 @@ const Login = () => {
                         aria-label="toggle password visibility"
                         onClick={() => setShowPassword(!showPassword)}
                         edge="end"
+                        disabled={isSubmitting}
                       >
                         {showPassword ? <VisibilityOff /> : <Visibility />}
                       </IconButton>
@@ -223,6 +188,7 @@ const Login = () => {
               />
             )}
           />
+
           <Button
             type="submit"
             fullWidth
@@ -244,6 +210,7 @@ const Login = () => {
           >
             {isSubmitting ? "Logging in..." : "Log In"}
           </Button>
+
           <Box
             sx={{
               display: "flex",
@@ -253,10 +220,25 @@ const Login = () => {
               mt: 2,
             }}
           >
-            <Link href="#" variant="body2" sx={{ mb: isMobile ? 1 : 0 }}>
+            <Link
+              href="/forgot-password"
+              variant="body2"
+              sx={{ mb: isMobile ? 1 : 0 }}
+              onClick={(e) => {
+                e.preventDefault();
+                navigate("/forgot-password");
+              }}
+            >
               Forgot password?
             </Link>
-            <Link href="/signup" variant="body2">
+            <Link
+              href="/signup"
+              variant="body2"
+              onClick={(e) => {
+                e.preventDefault();
+                navigate("/signup");
+              }}
+            >
               Don't have an account? Sign Up
             </Link>
           </Box>

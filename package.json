@@ -8,6 +8,7 @@
     "@hookform/resolvers": "^3.10.0",
     "@mui/icons-material": "^6.4.0",
     "@mui/material": "^6.4.0",
+    "axios": "^1.7.9",
     "bootstrap": "^5.3.3",
     "cra-template": "1.2.0",
     "formik": "^2.4.6",

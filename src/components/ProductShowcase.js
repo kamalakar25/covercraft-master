@@ -192,9 +192,7 @@ function ProductShowcase({ category }) {
                     },
                   }}
                   image={
-                    product.image.startsWith("http")
-                      ? product.image
-                      : `/assets/images/${product.image}.jpg`
+                    product.image
                   }
                   alt={product.name}
                 />

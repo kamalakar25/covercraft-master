@@ -1,21 +1,29 @@
 // src/contexts/AuthContext.js
-import React, { createContext, useState, useContext } from "react";
+import React, {
+  createContext,
+  useState,
+  useContext,
+  useEffect,
+  useRef,
+} from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { useEffect, useRef } from "react";
 
-const API_URL = process.env.REACT_APP_API_URL || "https://covercraft-backend.onrender.com/api";
+const API_URL =
+  process.env.REACT_APP_API_URL ||
+  "https://covercraft-backend.onrender.com/api";
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [lastActivity, setLastActivity] = useState(Date.now());
   const inactivityTimeoutRef = useRef(null);
-  const loginTimeoutRef = useRef(null);
   const navigate = useNavigate();
 
+  const INACTIVITY_TIMEOUT = 120000; // 5 minutes (300,000ms)
+
+  // Login function
   const login = async (email, password) => {
     try {
       const response = await axios.post(`${API_URL}/auth/login`, {
@@ -26,63 +34,34 @@ export const AuthProvider = ({ children }) => {
       const { user, token } = response.data;
 
       localStorage.setItem("token", token);
-      localStorage.setItem("userEmail", user.email);
       axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
       setUser(user);
-      setLastActivity(Date.now());
-
-      // Set login timeout
-      loginTimeoutRef.current = setTimeout(() => {
-        logout();
-        navigate("/login");
-      }, 60000); // 1 minute
-
       resetInactivityTimeout();
+
       return user;
     } catch (error) {
       throw new Error(error.response?.data?.error || "Login failed");
     }
   };
 
-  const signup = async (userData) => {
-    try {
-      const response = await axios.post(`${API_URL}/auth/signup`, userData);
-
-      const { user, token } = response.data;
-
-      // Store token in localStorage
-      localStorage.setItem("token", token);
-
-      // Set axios default header for future requests
-      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-
-      setUser(user);
-      return user;
-    } catch (error) {
-      throw new Error(error.response?.data?.error || "Signup failed");
-    }
-  };
-
+  // Logout function
   const logout = async () => {
     try {
       await axios.post(`${API_URL}/auth/logout`);
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
-      // Clear token and user data
       localStorage.removeItem("token");
       delete axios.defaults.headers.common["Authorization"];
       setUser(null);
-      if (inactivityTimeoutRef.current) {
+      if (inactivityTimeoutRef.current)
         clearTimeout(inactivityTimeoutRef.current);
-      }
-      if (loginTimeoutRef.current) {
-        clearTimeout(loginTimeoutRef.current);
-      }
+      navigate("/login");
     }
   };
 
+  // Check if user is authenticated
   const checkAuth = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -94,35 +73,32 @@ export const AuthProvider = ({ children }) => {
       axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
       const response = await axios.get(`${API_URL}/auth/me`);
       setUser(response.data.user);
+      resetInactivityTimeout(); // Ensure timeout resets on successful login
     } catch (error) {
-      localStorage.removeItem("token");
-      delete axios.defaults.headers.common["Authorization"];
+      logout();
     } finally {
       setLoading(false);
     }
   };
 
+  // Reset inactivity timeout
   const resetInactivityTimeout = () => {
-    if (inactivityTimeoutRef.current) {
+    if (inactivityTimeoutRef.current)
       clearTimeout(inactivityTimeoutRef.current);
-    }
+
     if (user) {
       inactivityTimeoutRef.current = setTimeout(() => {
         logout();
-        navigate("/login");
-      }, 60000); // 1 minute
+      }, INACTIVITY_TIMEOUT);
     }
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     checkAuth();
   }, []);
 
   useEffect(() => {
-    const handleActivity = () => {
-      setLastActivity(Date.now());
-      resetInactivityTimeout();
-    };
+    const handleActivity = () => resetInactivityTimeout();
 
     window.addEventListener("mousemove", handleActivity);
     window.addEventListener("keydown", handleActivity);
@@ -133,20 +109,9 @@ export const AuthProvider = ({ children }) => {
     };
   }, [user]);
 
-  useEffect(() => {
-    if (user) {
-      resetInactivityTimeout();
-    }
-    return () => {
-      if (inactivityTimeoutRef.current) {
-        clearTimeout(inactivityTimeoutRef.current);
-      }
-    };
-  }, [user, lastActivity]);
-
   return (
     <AuthContext.Provider
-      value={{ user, login, logout, signup, loading, resetInactivityTimeout }}
+      value={{ user, login, logout, loading, resetInactivityTimeout }}
     >
       {children}
     </AuthContext.Provider>

@@ -193,9 +193,7 @@ const addToCart = async () => {
                   whileHover={{ scale: 1.05 }}
                   transition={{ duration: 0.3 }}
                   src={
-                    product.image.startsWith("http")
-                      ? product.image
-                      : `/assets/images/${product.image}.jpg`
+                    product.image
                   } // Use absolute path from 'public'
                   alt={product.name}
                   sx={{

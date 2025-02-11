@@ -184,8 +184,6 @@ function CartPage() {
                             alt={item.productId.model || "Product"}
                             src={
                               item.productId.image
-                                ? `/assets/images/${item.productId.image}.jpg`
-                                : undefined
                             }
                             variant="square"
                             sx={{ width: 80, height: 80, mr: 2 }}

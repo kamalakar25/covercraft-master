@@ -35,7 +35,7 @@ function Header(props) {
 
     try {
       const response = await axios.get(
-        `http://localhost:5000/api/cart/${currentUser.id}`
+        `https://covercraft-backend.onrender.com/api/cart/${currentUser.id}`
       );
       const cartItems = response.data.items || [];
       const itemCount = cartItems.reduce(

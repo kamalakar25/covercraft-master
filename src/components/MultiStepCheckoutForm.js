@@ -32,7 +32,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-toastify";
 
-const API_BASE_URL = "http://localhost:5000/api"; // Adjust for your backend URL
+const API_BASE_URL = "https://covercraft-backend.onrender.com/api"; // Adjust for your backend URL
 
 // Enhanced dark theme
 const darkTheme = createTheme({

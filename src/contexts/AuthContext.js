@@ -20,7 +20,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const inactivityTimeoutRef = useRef(null);
   const navigate = useNavigate();
-  
+
   const INACTIVITY_TIMEOUT = 120000; // 2 minutes (5min = 300,000ms)
 
   // Login function

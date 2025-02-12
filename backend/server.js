@@ -12,23 +12,36 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// app.use(
+//   cors({
+//     origin: "https://covercraft.vercel.app/", // Your frontend URL "http://localhost:3000"
+//     credentials: true,
+//   })
+// );
 
 // Define allowed origins
 const allowedOrigins = [
-  "http://localhost:3000",  // Allow for local development
-  "https://covercraft.vercel.app",  // Allow for production
+  "http://localhost:3000", // Allow for local development
+  "http://localhost:3001", // Allow for local development
+  "https://covercraft.vercel.app", // Allow for production
 ];
 
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
-  credentials: true, // Allow credentials (cookies, authorization headers, etc.)
-}));
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      console.log("Incoming request from origin:", origin);
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        console.log("Origin not allowed:", origin);
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true, // Allow credentials (cookies, authorization headers, etc.)
+  })
+);
+
+console.log("CORS configuration set up with allowed origins:", allowedOrigins);
 
 // MongoDB Connection
 mongoose
@@ -294,10 +307,10 @@ app.post("/api/cart/add", async (req, res) => {
 });
 
 // Get cart
-app.get('/api/cart/:userId', async (req, res) => {
+app.get("/api/cart/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
-    const cart = await Cart.findOne({ userId }).populate('items.productId');
+    const cart = await Cart.findOne({ userId }).populate("items.productId");
     res.json(cart || { userId, items: [] });
   } catch (error) {
     res.status(500).json({ message: error.message });

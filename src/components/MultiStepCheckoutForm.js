@@ -1,13 +1,8 @@
-'use client';
+"use client"
 
-import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import {
-  Check,
-  CreditCard,
-  LocalShipping,
-  ErrorOutline,
-} from "@mui/icons-material";
+import { useState, useEffect } from "react"
+import { motion, AnimatePresence } from "framer-motion"
+import { Check, CreditCard, LocalShipping, ErrorOutline } from "@mui/icons-material"
 import {
   Button,
   CardContent,
@@ -26,13 +21,15 @@ import {
   useTheme,
   useMediaQuery,
   CircularProgress,
-} from "@mui/material";
-import { ThemeProvider, createTheme } from "@mui/material/styles";
-import { useNavigate } from "react-router-dom";
-import axios from "axios";
-import { toast } from "react-toastify";
+} from "@mui/material"
+import { ThemeProvider, createTheme } from "@mui/material/styles"
+import { useNavigate } from "react-router-dom"
+import axios from "axios"
+import { toast } from "react-toastify"
 
-const API_BASE_URL = "https://covercraft-backend.onrender.com/api"; // Adjust for your backend URL
+// const API_BASE_URL = process.env.REACT_APP_API_URL || "https://covercraft-backend.onrender.com/api"
+// const API_BASE_URL="https://covercraft-backend.onrender.com/api"
+const API_BASE_URL = "http://localhost:5000/api"
 
 // Enhanced dark theme
 const darkTheme = createTheme({
@@ -75,7 +72,7 @@ const darkTheme = createTheme({
       },
     },
   },
-});
+})
 
 // Animation variants
 const pageVariants = {
@@ -104,7 +101,7 @@ const pageVariants = {
       damping: 20,
     },
   }),
-};
+}
 
 const fadeInUp = {
   initial: { opacity: 0, y: 60 },
@@ -116,11 +113,11 @@ const fadeInUp = {
       ease: [0.6, -0.05, 0.01, 0.99],
     },
   },
-};
+}
 
-export default function MultiStepCheckoutForm({ cart, totalPrice, onClose }) {
-  const [step, setStep] = useState(1);
-  const [direction, setDirection] = useState(0);
+export default function MultiStepCheckoutForm({ totalPrice, onClose }) {
+  const [step, setStep] = useState(1)
+  const [direction, setDirection] = useState(0)
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -134,14 +131,15 @@ export default function MultiStepCheckoutForm({ cart, totalPrice, onClose }) {
     cardNumber: "",
     cardExpiry: "",
     cardCvc: "",
-  });
-  const [errors, setErrors] = useState({});
-  const [touched, setTouched] = useState({});
-  const [loading, setLoading] = useState(false);
+  })
+  const [errors, setErrors] = useState({})
+  const [touched, setTouched] = useState({})
+  const [loading, setLoading] = useState(false)
+  const [cart, setCart] = useState(null)
 
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-  const navigate = useNavigate();
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"))
+  const navigate = useNavigate()
 
   // Validation patterns
   const patterns = {
@@ -152,7 +150,7 @@ export default function MultiStepCheckoutForm({ cart, totalPrice, onClose }) {
     cardNumber: /^[\d]{16}$/,
     cardExpiry: /^(0[1-9]|1[0-2])\/([0-9]{2})$/,
     cardCvc: /^[\d]{3,4}$/,
-  };
+  }
 
   // Error messages
   const errorMessages = {
@@ -166,105 +164,94 @@ export default function MultiStepCheckoutForm({ cart, totalPrice, onClose }) {
     cardNumber: "Card number must be 16 digits",
     cardExpiry: "Invalid expiry date (MM/YY)",
     cardCvc: "CVC must be 3 or 4 digits",
-  };
+  }
 
   const validateField = (name, value) => {
-    if (!value)
-      return `${name.charAt(0).toUpperCase() + name.slice(1)} is required`;
+    if (!value) return `${name.charAt(0).toUpperCase() + name.slice(1)} is required`
     if (patterns[name] && !patterns[name].test(value.replace(/\s/g, ""))) {
-      return errorMessages[name];
+      return errorMessages[name]
     }
-    if (name === "address" && value.length < 10) return errorMessages.address;
+    if (name === "address" && value.length < 10) return errorMessages.address
     if (name === "cardExpiry") {
-      const [month, year] = value.split("/");
-      const expiryDate = new Date(
-        2000 + Number.parseInt(year),
-        Number.parseInt(month) - 1
-      );
+      const [month, year] = value.split("/")
+      const expiryDate = new Date(2000 + Number.parseInt(year), Number.parseInt(month) - 1)
       if (expiryDate <= new Date()) {
-        return "Expiry date must be in the future";
+        return "Expiry date must be in the future"
       }
     }
-    return "";
-  };
+    return ""
+  }
 
   const handleBlur = (field) => {
-    setTouched((prev) => ({ ...prev, [field]: true }));
-    const error = validateField(field, formData[field]);
-    setErrors((prev) => ({ ...prev, [field]: error }));
-  };
+    setTouched((prev) => ({ ...prev, [field]: true }))
+    const error = validateField(field, formData[field])
+    setErrors((prev) => ({ ...prev, [field]: error }))
+  }
 
   const validateStep = (stepNumber) => {
-    const newErrors = {};
-    let isValid = true;
+    const newErrors = {}
+    let isValid = true
 
     if (stepNumber === 1) {
-      ["name", "email", "phone", "address", "city", "state", "zipCode"].forEach(
-        (field) => {
-          const error = validateField(field, formData[field]);
-          if (error) {
-            newErrors[field] = error;
-            isValid = false;
-          }
+      ;["name", "email", "phone", "address", "city", "state", "zipCode"].forEach((field) => {
+        const error = validateField(field, formData[field])
+        if (error) {
+          newErrors[field] = error
+          isValid = false
         }
-      );
+      })
     }
 
     if (stepNumber === 2) {
       if (!formData.paymentMethod) {
-        newErrors.paymentMethod = "Please select a payment method";
-        isValid = false;
+        newErrors.paymentMethod = "Please select a payment method"
+        isValid = false
       }
     }
 
     if (stepNumber === 3 && formData.paymentMethod === "card") {
       if (!formData.cardType) {
-        newErrors.cardType = "Please select a card type";
-        isValid = false;
+        newErrors.cardType = "Please select a card type"
+        isValid = false
       }
     }
 
     if (stepNumber === 4 && formData.paymentMethod === "card") {
-      ["cardNumber", "cardExpiry", "cardCvc"].forEach((field) => {
-        const error = validateField(field, formData[field]);
+      ;["cardNumber", "cardExpiry", "cardCvc"].forEach((field) => {
+        const error = validateField(field, formData[field])
         if (error) {
-          newErrors[field] = error;
-          isValid = false;
+          newErrors[field] = error
+          isValid = false
         }
-      });
+      })
     }
 
-    setErrors(newErrors);
-    return isValid;
-  };
+    setErrors(newErrors)
+    return isValid
+  }
 
   const handleNext = () => {
-    if (step === 1 && !validateStep(1)) return;
-    if (step === 2 && !validateStep(2)) return;
-    if (step === 3 && formData.paymentMethod === "card" && !validateStep(3))
-      return;
-    if (step === 4 && formData.paymentMethod === "card" && !validateStep(4))
-      return;
+    if (step === 1 && !validateStep(1)) return
+    if (step === 2 && !validateStep(2)) return
+    if (step === 3 && formData.paymentMethod === "card" && !validateStep(3)) return
+    if (step === 4 && formData.paymentMethod === "card" && !validateStep(4)) return
 
-    if (
-      (step === 3 && formData.paymentMethod === "cod") ||
-      (step === 5 && formData.paymentMethod === "card")
-    ) {
-      placeOrder();
+    if ((step === 3 && formData.paymentMethod === "cod") || (step === 5 && formData.paymentMethod === "card")) {
+      placeOrder()
     } else {
-      setDirection(1);
-      setStep((prev) => prev + 1);
+      setDirection(1)
+      setStep((prev) => prev + 1)
     }
-  };
+  }
 
   const handleBack = () => {
-    setDirection(-1);
-    setStep((prev) => prev - 1);
-  };
+    setDirection(-1)
+    setStep((prev) => prev - 1)
+  }
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    let formattedValue = value;
+    const { name, value } = e.target
+    let formattedValue = value
 
     // Format specific fields
     switch (name) {
@@ -272,45 +259,69 @@ export default function MultiStepCheckoutForm({ cart, totalPrice, onClose }) {
         formattedValue = value
           .replace(/\s/g, "")
           .replace(/(\d{4})/g, "$1 ")
-          .trim();
-        break;
+          .trim()
+        break
       case "cardExpiry":
         formattedValue = value
           .replace(/\D/g, "")
           .replace(/(\d{2})(\d)/, "$1/$2")
-          .slice(0, 5);
-        break;
+          .slice(0, 5)
+        break
       case "phone":
-        formattedValue = value.replace(/\D/g, "").slice(0, 10);
-        break;
+        formattedValue = value.replace(/\D/g, "").slice(0, 10)
+        break
       case "zipCode":
-        formattedValue = value.replace(/\D/g, "").slice(0, 6);
-        break;
+        formattedValue = value.replace(/\D/g, "").slice(0, 6)
+        break
       default:
-        break;
+        break
     }
 
     setFormData((prev) => ({
       ...prev,
       [name]: formattedValue,
-    }));
+    }))
 
     if (touched[name]) {
-      const error = validateField(name, formattedValue);
-      setErrors((prev) => ({ ...prev, [name]: error }));
+      const error = validateField(name, formattedValue)
+      setErrors((prev) => ({ ...prev, [name]: error }))
     }
-  };
+  }
 
   const placeOrder = async () => {
-    setLoading(true);
+    setLoading(true)
+
     try {
+      if (!cart || !cart.items || cart.items.length === 0) {
+        toast.error("Cart is empty. Please add items before placing an order.")
+        setLoading(false)
+        return
+      }
+
+      if (
+        !formData ||
+        !formData.name ||
+        !formData.address ||
+        !formData.city ||
+        !formData.state ||
+        !formData.zipCode ||
+        !formData.phone ||
+        !formData.paymentMethod
+      ) {
+        toast.error("Please fill in all required shipping details.")
+        setLoading(false)
+        return
+      }
+
+      const parsedTotal = totalPrice ? Number.parseFloat(totalPrice) : 0
+
       const orderData = {
         items: cart.items.map((item) => ({
-          productId: item.productId._id,
-          quantity: item.quantity,
-          price: item.productId.price,
+          productId: item?.productId?._id,
+          quantity: item.quantity || 1,
+          price: item?.productId?.price || 0,
         })),
-        totalAmount: parseFloat(totalPrice),
+        totalAmount: parsedTotal,
         shippingAddress: {
           name: formData.name,
           address: formData.address,
@@ -320,27 +331,56 @@ export default function MultiStepCheckoutForm({ cart, totalPrice, onClose }) {
           phone: formData.phone,
         },
         paymentMethod: formData.paymentMethod,
-      };
+      }
+
+      const token = localStorage.getItem("token")
+      if (!token) {
+        toast.error("User not authenticated. Please log in.")
+        setLoading(false)
+        return
+      }
 
       const response = await axios.post(`${API_BASE_URL}/orders`, orderData, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          Authorization: `Bearer ${token}`,
         },
-      });
+      })
 
       if (response.data.orderId) {
-        toast.success("Order placed successfully!");
-        setStep((formData.paymentMethod === "card" ? 6 : 4));
+        toast.success("Order placed successfully!")
+        setStep(formData.paymentMethod === "card" ? 6 : 4)
+        // Clear the cart after successful order placement
+        const userEmail = localStorage.getItem("userEmail")
+        const userResponse = await axios.get(`${API_BASE_URL}/users/getUserId/${userEmail}`)
+        const userId = userResponse.data.userId
+        await axios.delete(`${API_BASE_URL}/cart/${userId}`)
       } else {
-        throw new Error("Failed to place order");
+        throw new Error("Failed to place order")
       }
     } catch (error) {
-      console.error("Error placing order:", error);
-      toast.error("Failed to place order. Please try again.");
+      console.error("Error placing order:", error)
+      toast.error(`Failed to place order: ${error.response?.data?.message || error.message}`)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
+
+  useEffect(() => {
+    const fetchCart = async () => {
+      try {
+        const userEmail = localStorage.getItem("userEmail")
+        const userResponse = await axios.get(`${API_BASE_URL}/users/getUserId/${userEmail}`)
+        const userId = userResponse.data.userId
+        const cartResponse = await axios.get(`${API_BASE_URL}/cart/${userId}`)
+        setCart(cartResponse.data)
+      } catch (error) {
+        console.error("Error fetching cart:", error)
+        toast.error("Failed to load cart data")
+      }
+    }
+
+    fetchCart()
+  }, [])
 
   const renderCardTypeSelection = () => (
     <motion.div variants={fadeInUp}>
@@ -349,44 +389,32 @@ export default function MultiStepCheckoutForm({ cart, totalPrice, onClose }) {
           Select Card Type
         </Typography>
         <FormControl component="fieldset" error={!!errors.cardType}>
-          <RadioGroup
-            name="cardType"
-            value={formData.cardType}
-            onChange={handleInputChange}
-          >
-            {["Visa", "MasterCard", "American Express", "Discover"].map(
-              (type) => (
-                <motion.div
-                  key={type}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+          <RadioGroup name="cardType" value={formData.cardType} onChange={handleInputChange}>
+            {["Visa", "MasterCard", "American Express", "Discover"].map((type) => (
+              <motion.div key={type} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                <Paper
+                  sx={{
+                    mb: 2,
+                    p: { xs: 2, sm: 3 },
+                    transition: "all 0.3s ease",
+                    "&:hover": {
+                      bgcolor: "action.hover",
+                    },
+                  }}
                 >
-                  <Paper
-                    sx={{
-                      mb: 2,
-                      p: { xs: 2, sm: 3 },
-                      transition: "all 0.3s ease",
-                      "&:hover": {
-                        bgcolor: "action.hover",
-                      },
-                    }}
-                  >
-                    <FormControlLabel
-                      value={type}
-                      control={<Radio />}
-                      label={
-                        <Box
-                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                        >
-                          <CreditCard />
-                          <Typography>{type}</Typography>
-                        </Box>
-                      }
-                    />
-                  </Paper>
-                </motion.div>
-              )
-            )}
+                  <FormControlLabel
+                    value={type}
+                    control={<Radio />}
+                    label={
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <CreditCard />
+                        <Typography>{type}</Typography>
+                      </Box>
+                    }
+                  />
+                </Paper>
+              </motion.div>
+            ))}
           </RadioGroup>
           {errors.cardType && (
             <Typography variant="caption" color="error">
@@ -396,7 +424,7 @@ export default function MultiStepCheckoutForm({ cart, totalPrice, onClose }) {
         </FormControl>
       </Box>
     </motion.div>
-  );
+  )
 
   return (
     <ThemeProvider theme={darkTheme}>
@@ -529,11 +557,7 @@ export default function MultiStepCheckoutForm({ cart, totalPrice, onClose }) {
                     gap: { xs: 2, sm: 3 },
                   }}
                 >
-                  <Typography
-                    variant="h5"
-                    gutterBottom
-                    style={{ color: "white" }}
-                  >
+                  <Typography variant="h5" gutterBottom style={{ color: "white" }}>
                     Personal Details
                   </Typography>
                   <TextField
@@ -632,29 +656,19 @@ export default function MultiStepCheckoutForm({ cart, totalPrice, onClose }) {
             {step === 2 && (
               <motion.div variants={fadeInUp}>
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                  <Typography
-                    variant="h5"
-                    gutterBottom
-                    style={{ color: "white" }}
-                  >
+                  <Typography variant="h5" gutterBottom style={{ color: "white" }}>
                     Payment Method
                   </Typography>
-                  <FormControl
-                    component="fieldset"
-                    error={!!errors.paymentMethod}
-                  >
+                  <FormControl component="fieldset" error={!!errors.paymentMethod}>
                     <RadioGroup
                       name="paymentMethod"
                       value={formData.paymentMethod}
                       onChange={(e) => {
-                        handleInputChange(e);
-                        setErrors((prev) => ({ ...prev, paymentMethod: "" }));
+                        handleInputChange(e)
+                        setErrors((prev) => ({ ...prev, paymentMethod: "" }))
                       }}
                     >
-                      <motion.div
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                      >
+                      <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                         <Paper
                           sx={{
                             mb: 2,
@@ -664,9 +678,7 @@ export default function MultiStepCheckoutForm({ cart, totalPrice, onClose }) {
                               bgcolor: "action.hover",
                             },
                             border: errors.paymentMethod ? "1px solid" : "none",
-                            borderColor: errors.paymentMethod
-                              ? "error.main"
-                              : "transparent",
+                            borderColor: errors.paymentMethod ? "error.main" : "transparent",
                           }}
                         >
                           <FormControlLabel
@@ -683,10 +695,7 @@ export default function MultiStepCheckoutForm({ cart, totalPrice, onClose }) {
                                 <LocalShipping />
                                 <Box>
                                   <Typography>Cash on Delivery</Typography>
-                                  <Typography
-                                    variant="caption"
-                                    color="text.secondary"
-                                  >
+                                  <Typography variant="caption" color="text.secondary">
                                     Pay when you receive
                                   </Typography>
                                 </Box>
@@ -695,10 +704,7 @@ export default function MultiStepCheckoutForm({ cart, totalPrice, onClose }) {
                           />
                         </Paper>
                       </motion.div>
-                      <motion.div
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                      >
+                      <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                         <Paper
                           sx={{
                             p: { xs: 2, sm: 3 },
@@ -707,9 +713,7 @@ export default function MultiStepCheckoutForm({ cart, totalPrice, onClose }) {
                               bgcolor: "action.hover",
                             },
                             border: errors.paymentMethod ? "1px solid" : "none",
-                            borderColor: errors.paymentMethod
-                              ? "error.main"
-                              : "transparent",
+                            borderColor: errors.paymentMethod ? "error.main" : "transparent",
                           }}
                         >
                           <FormControlLabel
@@ -726,10 +730,7 @@ export default function MultiStepCheckoutForm({ cart, totalPrice, onClose }) {
                                 <CreditCard />
                                 <Box>
                                   <Typography>Credit/Debit Card</Typography>
-                                  <Typography
-                                    variant="caption"
-                                    color="text.secondary"
-                                  >
+                                  <Typography variant="caption" color="text.secondary">
                                     Secure online payment
                                   </Typography>
                                 </Box>
@@ -766,18 +767,12 @@ export default function MultiStepCheckoutForm({ cart, totalPrice, onClose }) {
               </motion.div>
             )}
 
-            {step === 3 &&
-              formData.paymentMethod === "card" &&
-              renderCardTypeSelection()}
+            {step === 3 && formData.paymentMethod === "card" && renderCardTypeSelection()}
 
             {step === 4 && formData.paymentMethod === "card" && (
               <motion.div variants={fadeInUp}>
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                  <Typography
-                    variant="h5"
-                    gutterBottom
-                    style={{ color: "white" }}
-                  >
+                  <Typography variant="h5" gutterBottom style={{ color: "white" }}>
                     Card Details
                   </Typography>
                   <TextField
@@ -832,11 +827,7 @@ export default function MultiStepCheckoutForm({ cart, totalPrice, onClose }) {
               (step === 5 && formData.paymentMethod === "card")) && (
               <motion.div variants={fadeInUp}>
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                  <Typography
-                    variant="h5"
-                    gutterBottom
-                    style={{ color: "white" }}
-                  >
+                  <Typography variant="h5" gutterBottom style={{ color: "white" }}>
                     Confirm Order
                   </Typography>
                   <Paper sx={{ p: { xs: 2, sm: 3 } }}>
@@ -856,9 +847,7 @@ export default function MultiStepCheckoutForm({ cart, totalPrice, onClose }) {
                       Payment Method:
                     </Typography>
                     <Typography color="text.secondary">
-                      {formData.paymentMethod === "cod"
-                        ? "Cash on Delivery"
-                        : `${formData.cardType} Card`}
+                      {formData.paymentMethod === "cod" ? "Cash on Delivery" : `${formData.cardType} Card`}
                     </Typography>
                   </Paper>
                 </Box>
@@ -894,11 +883,7 @@ export default function MultiStepCheckoutForm({ cart, totalPrice, onClose }) {
                       <Check sx={{ fontSize: { xs: 30, sm: 40 } }} />
                     </Box>
                   </motion.div>
-                  <Typography
-                    variant="h5"
-                    gutterBottom
-                    style={{ color: "white" }}
-                  >
+                  <Typography variant="h5" gutterBottom style={{ color: "white" }}>
                     Order Confirmed!
                   </Typography>
                   <Typography color="text.secondary" paragraph>
@@ -908,14 +893,13 @@ export default function MultiStepCheckoutForm({ cart, totalPrice, onClose }) {
                     sx={{
                       p: { xs: 2, sm: 3 },
                       mt: 3,
-                      background:
-                        "linear-gradient(145deg, rgba(187, 134, 252, 0.1), rgba(3, 218, 198, 0.1))",
+                      background: "linear-gradient(145deg, rgba(187, 134, 252, 0.1), rgba(3, 218, 198, 0.1))",
                     }}
                   >
                     <Typography variant="h6" gutterBottom>
                       Order Summary
                     </Typography>
-                    {cart.items.map((item) => (
+                    {cart?.items?.map((item) => (
                       <Box
                         key={item.productId._id}
                         sx={{
@@ -927,15 +911,11 @@ export default function MultiStepCheckoutForm({ cart, totalPrice, onClose }) {
                         <Typography>
                           {item.productId.name} x {item.quantity}
                         </Typography>
-                        <Typography>
-                          ₹{(item.productId.price * item.quantity).toFixed(2)}
-                        </Typography>
+                        <Typography>₹{(item.productId.price * item.quantity).toFixed(2)}</Typography>
                       </Box>
                     ))}
                     <Divider sx={{ my: 2 }} />
-                    <Box
-                      sx={{ display: "flex", justifyContent: "space-between" }}
-                    >
+                    <Box sx={{ display: "flex", justifyContent: "space-between" }}>
                       <Typography variant="subtitle1">Total</Typography>
                       <Typography variant="subtitle1" color="primary">
                         ₹{totalPrice}
@@ -955,22 +935,13 @@ export default function MultiStepCheckoutForm({ cart, totalPrice, onClose }) {
                 flexDirection: { xs: "column", sm: "row" },
               }}
             >
-              {step > 1 &&
-                step < (formData.paymentMethod === "card" ? 6 : 4) && (
-                  <Button
-                    variant="outlined"
-                    onClick={handleBack}
-                    fullWidth={isMobile}
-                  >
-                    Back
-                  </Button>
-                )}
+              {step > 1 && step < (formData.paymentMethod === "card" ? 6 : 4) && (
+                <Button variant="outlined" onClick={handleBack} fullWidth={isMobile}>
+                  Back
+                </Button>
+              )}
               {step === 1 && (
-                <Button
-                  variant="outlined"
-                  onClick={onClose}
-                  fullWidth={isMobile}
-                >
+                <Button variant="outlined" onClick={onClose} fullWidth={isMobile}>
                   Cancel
                 </Button>
               )}
@@ -980,11 +951,9 @@ export default function MultiStepCheckoutForm({ cart, totalPrice, onClose }) {
                   onClick={handleNext}
                   fullWidth={isMobile}
                   sx={{
-                    background:
-                      "linear-gradient(45deg, #BB86FC 30%, #03DAC6 90%)",
+                    background: "linear-gradient(45deg, #BB86FC 30%, #03DAC6 90%)",
                     "&:hover": {
-                      background:
-                        "linear-gradient(45deg, #9965f4 30%, #02b3a9 90%)",
+                      background: "linear-gradient(45deg, #9965f4 30%, #02b3a9 90%)",
                     },
                   }}
                 >
@@ -999,19 +968,13 @@ export default function MultiStepCheckoutForm({ cart, totalPrice, onClose }) {
                   fullWidth={isMobile}
                   disabled={loading}
                   sx={{
-                    background:
-                      "linear-gradient(45deg, #BB86FC 30%, #03DAC6 90%)",
+                    background: "linear-gradient(45deg, #BB86FC 30%, #03DAC6 90%)",
                     "&:hover": {
-                      background:
-                        "linear-gradient(45deg, #9965f4 30%, #02b3a9 90%)",
+                      background: "linear-gradient(45deg, #9965f4 30%, #02b3a9 90%)",
                     },
                   }}
                 >
-                  {loading ? (
-                    <CircularProgress size={24} color="inherit" />
-                  ) : (
-                    "Place Order"
-                  )}
+                  {loading ? <CircularProgress size={24} color="inherit" /> : "Place Order"}
                 </Button>
               )}
               {((step === 4 && formData.paymentMethod === "cod") ||
@@ -1021,11 +984,9 @@ export default function MultiStepCheckoutForm({ cart, totalPrice, onClose }) {
                   onClick={onClose}
                   fullWidth={isMobile}
                   sx={{
-                    background:
-                      "linear-gradient(45deg, #BB86FC 30%, #03DAC6 90%)",
+                    background: "linear-gradient(45deg, #BB86FC 30%, #03DAC6 90%)",
                     "&:hover": {
-                      background:
-                        "linear-gradient(45deg, #9965f4 30%, #02b3a9 90%)",
+                      background: "linear-gradient(45deg, #9965f4 30%, #02b3a9 90%)",
                     },
                   }}
                 >
@@ -1037,7 +998,6 @@ export default function MultiStepCheckoutForm({ cart, totalPrice, onClose }) {
         </AnimatePresence>
       </CardContent>
     </ThemeProvider>
-  );
+  )
 }
 
-// export default MultiStepCheckoutForm;

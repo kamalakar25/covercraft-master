@@ -13,8 +13,6 @@ import {
   Container,
   IconButton,
   Dialog,
-  Snackbar,
-  Alert,
 } from "@mui/material";
 import { DeleteOutline, ShoppingCart, Add, Remove } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
@@ -66,12 +64,8 @@ function CartPage() {
     try {
       setLoading(true);
       const response = await axios.get(`${API_BASE_URL}/cart/${userId}`);
-      // Validate cart data structure
       const cartData = response.data || { items: [] };
-      const validatedItems = cartData.items.filter(
-        (item) => item && item.productId && typeof item.productId === "object"
-      );
-      setCart({ ...cartData, items: validatedItems });
+      setCart({ ...cartData, items: cartData.items || [] });
       setError(null);
     } catch (err) {
       setError("Failed to load cart.");
@@ -137,32 +131,27 @@ function CartPage() {
     setIsCheckoutOpen(true);
   };
 
-  if (loading) {
-    return (
-      <Container maxWidth="md">
-        <Box sx={{ mt: 10, textAlign: "center" }}>
-          <Typography>Loading cart...</Typography>
-        </Box>
-      </Container>
-    );
-  }
-
-  if (error) {
-    return (
-      <Container maxWidth="md">
-        <Box sx={{ mt: 10, textAlign: "center" }}>
-          <Typography color="error">{error}</Typography>
-        </Box>
-      </Container>
-    );
-  }
-
   return (
     <>
       <Header />
       <Container maxWidth="md">
-        <Paper elevation={3} sx={{ p: 3, mt: 10, bgcolor: "background.paper" }}>
-          <Typography variant="h4" gutterBottom sx={{ color: "primary.main" }}>
+        <Paper
+          elevation={3}
+          sx={{
+            p: { xs: 2, sm: 3 },
+            mt: { xs: 5, sm: 10 },
+            bgcolor: "background.paper",
+            width: "100%",
+          }}
+        >
+          <Typography
+            variant="h4"
+            gutterBottom
+            sx={{
+              color: "primary.main",
+              fontSize: { xs: "1.5rem", sm: "2rem" },
+            }}
+          >
             Your Cart
           </Typography>
           {cart.items.length === 0 ? (
@@ -172,85 +161,80 @@ function CartPage() {
           ) : (
             <Box>
               <List>
-                {cart.items.map((item) => {
-                  // Skip rendering if item or productId is null/undefined
-                  if (!item?.productId) return null;
-
-                  return (
-                    <React.Fragment key={item.productId._id}>
-                      <ListItem alignItems="flex-start">
-                        <ListItemAvatar>
-                          <Avatar
-                            alt={item.productId.model || "Product"}
-                            src={
-                              item.productId.image
-                            }
-                            variant="square"
-                            sx={{ width: 80, height: 80, mr: 2 }}
-                          />
-                        </ListItemAvatar>
-                        <ListItemText
-                          primary={item.productId.model || "Unknown Product"}
-                          secondary={
-                            <>
-                              <Typography
-                                component="span"
-                                variant="body2"
-                                color="text.primary"
-                              >
-                                ₹{(item.productId.price || 0).toFixed(2)}
-                              </Typography>
-                              {item.productId.discountPrice && (
+                {cart.items.map(
+                  (item) =>
+                    item?.productId && (
+                      <React.Fragment key={item.productId._id}>
+                        <ListItem
+                          sx={{
+                            flexDirection: { xs: "column", sm: "row" },
+                            alignItems: "center",
+                          }}
+                        >
+                          <ListItemAvatar>
+                            <Avatar
+                              alt={item.productId.model || "Product"}
+                              src={item.productId.image}
+                              variant="square"
+                              sx={{
+                                width: { xs: 60, sm: 80 },
+                                height: { xs: 60, sm: 80 },
+                                mb: { xs: 1, sm: 0 },
+                              }}
+                            />
+                          </ListItemAvatar>
+                          <ListItemText
+                            primary={item.productId.model || "Unknown Product"}
+                            secondary={
+                              <>
                                 <Typography
                                   component="span"
                                   variant="body2"
-                                  color="text.secondary"
-                                  sx={{ textDecoration: "line-through", ml: 1 }}
+                                  color="text.primary"
                                 >
-                                  ₹{item.productId.discountPrice.toFixed(2)}
+                                  ₹{(item.productId.price || 0).toFixed(2)}
                                 </Typography>
-                              )}
-                              <Box
-                                sx={{
-                                  display: "flex",
-                                  alignItems: "center",
-                                  mt: 1,
-                                }}
-                              >
-                                <IconButton
-                                  onClick={() =>
-                                    updateQuantity(item.productId._id, -1)
-                                  }
-                                  disabled={item.quantity <= 1}
+                                <Box
+                                  sx={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    mt: 1,
+                                  }}
                                 >
-                                  <Remove />
-                                </IconButton>
-                                <Typography sx={{ mx: 1 }}>
-                                  {item.quantity || 1}
-                                </Typography>
-                                <IconButton
-                                  onClick={() =>
-                                    updateQuantity(item.productId._id, 1)
-                                  }
-                                >
-                                  <Add />
-                                </IconButton>
-                              </Box>
-                            </>
-                          }
-                        />
-                        <Button
-                          startIcon={<DeleteOutline />}
-                          onClick={() => removeFromCart(item.productId._id)}
-                          color="error"
-                        >
-                          Remove
-                        </Button>
-                      </ListItem>
-                      <Divider variant="inset" component="li" />
-                    </React.Fragment>
-                  );
-                })}
+                                  <IconButton
+                                    onClick={() =>
+                                      updateQuantity(item.productId._id, -1)
+                                    }
+                                    disabled={item.quantity <= 1}
+                                  >
+                                    <Remove />
+                                  </IconButton>
+                                  <Typography sx={{ mx: 1 }}>
+                                    {item.quantity || 1}
+                                  </Typography>
+                                  <IconButton
+                                    onClick={() =>
+                                      updateQuantity(item.productId._id, 1)
+                                    }
+                                  >
+                                    <Add />
+                                  </IconButton>
+                                </Box>
+                              </>
+                            }
+                          />
+                          <Button
+                            startIcon={<DeleteOutline />}
+                            onClick={() => removeFromCart(item.productId._id)}
+                            color="error"
+                          >
+                            Remove
+                          </Button>
+                        </ListItem>
+                        <Divider variant="inset" component="li" />
+                      </React.Fragment>
+                    )
+                )}
               </List>
               <Box sx={{ mt: 3, textAlign: "right" }}>
                 <Typography variant="h6" sx={{ mb: 2 }}>
@@ -262,6 +246,7 @@ function CartPage() {
                   startIcon={<ShoppingCart />}
                   onClick={handleProceedToBuy}
                   size="large"
+                  fullWidth
                 >
                   Proceed to Buy
                 </Button>
@@ -269,7 +254,6 @@ function CartPage() {
             </Box>
           )}
         </Paper>
-
         <Dialog
           open={isCheckoutOpen}
           onClose={() => setIsCheckoutOpen(false)}

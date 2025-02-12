@@ -15,9 +15,10 @@ import {
   useTheme,
   CircularProgress,
   Alert,
+  Snackbar,
 } from "@mui/material";
-import { motion, AnimatePresence } from "framer-motion";
-import React, { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import Header from "./Header";
@@ -26,7 +27,8 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const API_BASE_URL =
-  process.env.REACT_APP_API_URL || "https://covercraft-backend.onrender.com/api";
+  process.env.REACT_APP_API_URL ||
+  "https://covercraft-backend.onrender.com/api";
 
 function ProductDetail() {
   const { productId } = useParams();
@@ -39,6 +41,8 @@ function ProductDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [openCheckout, setOpenCheckout] = useState(false);
+  const [addingToCart, setAddingToCart] = useState(false);
+  const [processingBuyNow, setProcessingBuyNow] = useState(false);
 
   useEffect(() => {
     fetchProductDetails();
@@ -60,46 +64,75 @@ function ProductDetail() {
     }
   };
 
-const addToCart = async () => {
-  try {
-    const userEmail = localStorage.getItem("userEmail"); // Get email from localStorage or auth system
-
+  const getUserId = async () => {
+    const userEmail = localStorage.getItem("userEmail");
     if (!userEmail) {
-      toast.error("User not logged in!");
-      return;
+      throw new Error("User not logged in");
     }
-
-    // Fetch userId using email
     const userResponse = await axios.get(
       `${API_BASE_URL}/users/getUserId/${userEmail}`
     );
-    const userId = userResponse.data.userId;
+    return userResponse.data.userId;
+  };
 
-    if (!userId) {
-      toast.error("User ID not found!");
-      return;
+  const addToCart = async () => {
+    try {
+      setAddingToCart(true);
+      const userId = await getUserId();
+
+      await axios.post(`${API_BASE_URL}/cart/add`, {
+        userId,
+        productId: product._id,
+        quantity: 1,
+      });
+
+      toast.success(`${product.name} added to cart!`, {
+        position: "bottom-center",
+        autoClose: 2000,
+        hideProgressBar: false,
+      });
+    } catch (error) {
+      if (error.message === "User not logged in") {
+        toast.error("Please log in to add items to cart");
+        // Optionally redirect to login page
+        // navigate('/login');
+      } else {
+        toast.error("Failed to add item to cart");
+      }
+    } finally {
+      setAddingToCart(false);
     }
+  };
 
-    // Add to cart
-    await axios.post(`${API_BASE_URL}/cart/add`, {
-      userId,
-      productId: product._id,
-      quantity: 1,
-    });
+  const handleBuyNow = async () => {
+    try {
+      setProcessingBuyNow(true);
+      const userId = await getUserId();
 
-    toast.success(`${product.name} added to cart!`, {
-      position: "bottom-center",
-      autoClose: 3000,
-      hideProgressBar: true,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      theme: "light",
-    });
-  } catch (error) {
-    toast.error("Failed to add item to cart");
-  }
-};
+      // Clear existing cart items (optional - depending on your requirements)
+      await axios.delete(`${API_BASE_URL}/cart/${userId}`);
+
+      // Add the current item to cart
+      await axios.post(`${API_BASE_URL}/cart/add`, {
+        userId,
+        productId: product._id,
+        quantity: 1,
+      });
+
+      // Open checkout dialog
+      setOpenCheckout(true);
+    } catch (error) {
+      if (error.message === "User not logged in") {
+        toast.error("Please log in to proceed with purchase");
+        // Optionally redirect to login page
+        // navigate('/login');
+      } else {
+        toast.error("Failed to process purchase");
+      }
+    } finally {
+      setProcessingBuyNow(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -192,9 +225,7 @@ const addToCart = async () => {
                   component={motion.img}
                   whileHover={{ scale: 1.05 }}
                   transition={{ duration: 0.3 }}
-                  src={
-                    product.image
-                  } // Use absolute path from 'public'
+                  src={product.image} // Use absolute path from 'public'
                   alt={product.name}
                   sx={{
                     width: "100%",
@@ -276,7 +307,6 @@ const addToCart = async () => {
                 >
                   {product.description}
                 </Typography>
-
                 <Box sx={{ display: "flex", gap: 2 }}>
                   <Button
                     variant="contained"
@@ -288,26 +318,56 @@ const addToCart = async () => {
                       py: 1.5,
                       borderRadius: 2,
                       boxShadow: "0 4px 6px rgba(187, 134, 252, 0.25)",
+                      position: "relative",
                     }}
                     onClick={addToCart}
-                    disabled={!product.inStock}
+                    disabled={!product.inStock || addingToCart}
                   >
-                    Add to Cart
+                    {addingToCart ? (
+                      <>
+                        <CircularProgress
+                          size={24}
+                          sx={{
+                            position: "absolute",
+                            left: "50%",
+                            marginLeft: "-12px",
+                          }}
+                        />
+                        <span style={{ opacity: 0 }}>Add to Cart</span>
+                      </>
+                    ) : (
+                      "Add to Cart"
+                    )}
                   </Button>
-                  <Button
-                    variant="outlined"
-                    color="primary"
+                  {/* <Button
+                    variant="contained"
+                    color="secondary"
                     size="large"
                     sx={{
                       flex: 1,
                       py: 1.5,
                       borderRadius: 2,
+                      position: "relative",
                     }}
-                    onClick={() => setOpenCheckout(true)}
-                    disabled={!product.inStock}
+                    onClick={handleBuyNow}
+                    disabled={!product.inStock || processingBuyNow}
                   >
-                    Buy Now
-                  </Button>
+                    {processingBuyNow ? (
+                      <>
+                        <CircularProgress
+                          size={24}
+                          sx={{
+                            position: "absolute",
+                            left: "50%",
+                            marginLeft: "-12px",
+                          }}
+                        />
+                        <span style={{ opacity: 0 }}>Buy Now</span>
+                      </>
+                    ) : (
+                      "Buy Now"
+                    )}
+                  </Button> */}
                 </Box>
               </Box>
             </Grid>

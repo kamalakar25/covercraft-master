@@ -18,7 +18,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const API_BASE_URL =
-  process.env.REACT_APP_API_URL || "https://covercraft-backend.onrender.com/api";
+  process.env.REACT_APP_API_URL || "https://covercraft-backend.onrender.com/api" ; // http://localhost:5000/api/ 
 
 function ProductShowcase({ category }) {
   const navigate = useNavigate();

@@ -214,13 +214,13 @@ const Login = () => {
           <Box
             sx={{
               display: "flex",
-              justifyContent: "space-between",
+              justifyContent: "center",
               flexDirection: isMobile ? "column" : "row",
               alignItems: "center",
               mt: 2,
             }}
           >
-            <Link
+            {/* <Link
               href="/forgot-password"
               variant="body2"
               sx={{ mb: isMobile ? 1 : 0 }}
@@ -230,7 +230,7 @@ const Login = () => {
               }}
             >
               Forgot password?
-            </Link>
+            </Link> */}
             <Link
               href="/signup"
               variant="body2"

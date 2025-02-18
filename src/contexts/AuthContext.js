@@ -1,16 +1,15 @@
 // src/contexts/AuthContext.js
+import axios from 'axios';
 import React, {
   createContext,
-  useState,
   useContext,
   useEffect,
   useRef,
-} from "react";
-import axios from "axios";
-import { useNavigate } from "react-router-dom";
+  useState,
+} from 'react';
+import { useNavigate } from 'react-router-dom';
 
-const API_URL =
-  process.env.REACT_APP_API_URL;
+const API_URL = process.env.REACT_APP_API_URL;
 
 const AuthContext = createContext(null);
 
@@ -22,6 +21,13 @@ export const AuthProvider = ({ children }) => {
 
   const INACTIVITY_TIMEOUT = 1200000; // 2 minutes (5min = 300,000ms)
 
+  useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
+
   // Login function
   const login = async (email, password) => {
     try {
@@ -32,15 +38,20 @@ export const AuthProvider = ({ children }) => {
 
       const { user, token } = response.data;
 
-      localStorage.setItem("token", token);
-      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+      localStorage.setItem('user', JSON.stringify(user));
+
+      localStorage.setItem('token', token);
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
       setUser(user);
       resetInactivityTimeout();
 
+      console.log('User:', user);
+      console.log('Loading:', loading);
+
       return user;
     } catch (error) {
-      throw new Error(error.response?.data?.error || "Login failed");
+      throw new Error(error.response?.data?.error || 'Login failed');
     }
   };
 
@@ -49,27 +60,27 @@ export const AuthProvider = ({ children }) => {
     try {
       await axios.post(`${API_URL}/auth/logout`);
     } catch (error) {
-      console.error("Logout error:", error);
+      console.error('Logout error:', error);
     } finally {
-      localStorage.removeItem("token");
-      delete axios.defaults.headers.common["Authorization"];
+      localStorage.removeItem('token');
+      delete axios.defaults.headers.common['Authorization'];
       setUser(null);
       if (inactivityTimeoutRef.current)
         clearTimeout(inactivityTimeoutRef.current);
-      navigate("/login");
+      navigate('/login');
     }
   };
 
   // Check if user is authenticated
   const checkAuth = async () => {
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem('token');
       if (!token) {
         setLoading(false);
         return;
       }
 
-      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       const response = await axios.get(`${API_URL}/auth/me`);
       setUser(response.data.user);
       resetInactivityTimeout(); // Ensure timeout resets on successful login
@@ -99,12 +110,12 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const handleActivity = () => resetInactivityTimeout();
 
-    window.addEventListener("mousemove", handleActivity);
-    window.addEventListener("keydown", handleActivity);
+    window.addEventListener('mousemove', handleActivity);
+    window.addEventListener('keydown', handleActivity);
 
     return () => {
-      window.removeEventListener("mousemove", handleActivity);
-      window.removeEventListener("keydown", handleActivity);
+      window.removeEventListener('mousemove', handleActivity);
+      window.removeEventListener('keydown', handleActivity);
     };
   }, [user]);
 
@@ -120,7 +131,7 @@ export const AuthProvider = ({ children }) => {
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
+    throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 };

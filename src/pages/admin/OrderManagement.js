@@ -50,6 +50,7 @@ const OrderManagement = ({ orders, setOrders }) => {
           order._id === orderId ? { ...order, orderStatus: newStatus } : order
         )
       );
+      alert("Order Updated")
 
       toast.success("Order status updated successfully");
     } catch (error) {

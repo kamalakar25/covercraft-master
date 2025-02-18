@@ -1,30 +1,30 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
 import {
   Box,
-  Typography,
-  Grid,
-  Card,
-  CardMedia,
-  CardContent,
   Button,
+  Card,
+  CardContent,
+  CardMedia,
+  CircularProgress,
+  Grid,
+  Typography,
   useMediaQuery,
   useTheme,
-  CircularProgress,
-} from "@mui/material";
-import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+} from '@mui/material';
+import axios from 'axios';
+import { motion } from 'framer-motion';
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
-const API_BASE_URL =
-  process.env.REACT_APP_API_URL; // http://localhost:5000/api/ 
+const API_BASE_URL = process.env.REACT_APP_API_URL; // http://localhost:5000/api/
 
 function ProductShowcase({ category }) {
   const navigate = useNavigate();
+  const [addingToCart, setAddingToCart] = useState(false);
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-  const isTablet = useMediaQuery(theme.breakpoints.between("sm", "md"));
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'));
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -40,8 +40,8 @@ function ProductShowcase({ category }) {
       setProducts(response.data);
       setError(null);
     } catch (err) {
-      setError("Failed to fetch products. Please try again later.");
-      toast.error("Error loading products");
+      setError('Failed to fetch products. Please try again later.');
+      toast.error('Error loading products');
     } finally {
       setLoading(false);
     }
@@ -51,14 +51,52 @@ function ProductShowcase({ category }) {
     navigate(`/product/${productId}`);
   };
 
+  const getUserId = async () => {
+    const userEmail = localStorage.getItem("userEmail");
+    if (!userEmail) {
+      throw new Error("User not logged in");
+    }
+    const userResponse = await axios.get(
+      `${API_BASE_URL}/users/getUserId/${userEmail}`
+    );
+    return userResponse.data.userId;
+  };
+
   const handleAddToCart = async (event, product) => {
     event.stopPropagation();
 
     try {
-      const userEmail = localStorage.getItem("userEmail"); // Get email from localStorage or auth system
+      setAddingToCart(true);
+      const userId = await getUserId();
+
+      await axios.post(`${API_BASE_URL}/cart/add`, {
+        userId,
+        productId: product._id,
+        quantity: 1,
+      });
+
+      toast.success(`${product.name} added to cart!`, {
+        position: "bottom-center",
+        autoClose: 2000,
+        hideProgressBar: false,
+      });
+    } catch (error) {
+      if (error.message === "User not logged in") {
+        toast.error("Please log in to add items to cart");
+        // Optionally redirect to login page
+        // navigate('/login');
+      } else {
+        toast.error("Failed to add item to cart");
+      }
+    } finally {
+      setAddingToCart(false);
+    }
+
+    try {
+      const userEmail = localStorage.getItem('userEmail'); // Get email from localStorage or auth system
 
       if (!userEmail) {
-        toast.error("User not logged in!");
+        toast.error('User not logged in!');
         return;
       }
 
@@ -69,7 +107,7 @@ function ProductShowcase({ category }) {
       const userId = userResponse.data.userId;
 
       if (!userId) {
-        toast.error("User ID not found!");
+        toast.error('User ID not found!');
         return;
       }
 
@@ -81,16 +119,16 @@ function ProductShowcase({ category }) {
       });
 
       toast.success(`${product.name} added to cart!`, {
-        position: "bottom-center",
+        position: 'bottom-center',
         autoClose: 3000,
         hideProgressBar: true,
         closeOnClick: true,
         pauseOnHover: true,
         draggable: true,
-        theme: "light",
+        theme: 'light',
       });
     } catch (error) {
-      toast.error("Failed to add item to cart");
+      toast.error('Failed to add item to cart');
     }
   };
 
@@ -103,10 +141,10 @@ function ProductShowcase({ category }) {
   if (loading) {
     return (
       <Box
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        minHeight="400px"
+        display='flex'
+        justifyContent='center'
+        alignItems='center'
+        minHeight='400px'
       >
         <CircularProgress />
       </Box>
@@ -116,43 +154,43 @@ function ProductShowcase({ category }) {
   if (error) {
     return (
       <Box
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        minHeight="400px"
+        display='flex'
+        justifyContent='center'
+        alignItems='center'
+        minHeight='400px'
       >
-        <Typography color="error">{error}</Typography>
+        <Typography color='error'>{error}</Typography>
       </Box>
     );
   }
 
   return (
     <Box
-      id="productshowcase"
+      id='productshowcase'
       sx={{
         py: 4,
         px: 2,
-        maxWidth: "1200px",
-        margin: "0 auto",
-        bgcolor: "background.default",
+        maxWidth: '1200px',
+        margin: '0 auto',
+        bgcolor: 'background.default',
         borderRadius: 2,
         boxShadow: 3,
       }}
     >
       <ToastContainer />
       <Typography
-        variant="h3"
-        component="h2"
+        variant='h3'
+        component='h2'
         gutterBottom
-        textAlign="center"
-        sx={{ color: "primary.main", mb: 4, fontWeight: "bold" }}
+        textAlign='center'
+        sx={{ color: 'primary.main', mb: 4, fontWeight: 'bold' }}
       >
         {category} Products
       </Typography>
       <Grid
         container
         spacing={2}
-        sx={{ display: "flex", justifyContent: "center" }}
+        sx={{ display: 'flex', justifyContent: 'center' }}
       >
         {products.map((product, index) => (
           <Grid item xs={6} sm={4} md={getGridSize()} key={product._id}>
@@ -165,30 +203,30 @@ function ProductShowcase({ category }) {
               <Card
                 onClick={() => handleCardClick(product._id)}
                 sx={{
-                  bgcolor: "background.paper",
+                  bgcolor: 'background.paper',
                   borderRadius: 3,
-                  height: "100%",
-                  display: "flex",
-                  flexDirection: "column",
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
                   boxShadow: 4,
-                  cursor: "pointer",
-                  transition: "transform 0.3s ease, box-shadow 0.3s ease",
-                  "&:hover": {
-                    transform: "translateY(-10px)",
+                  cursor: 'pointer',
+                  transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                  '&:hover': {
+                    transform: 'translateY(-10px)',
                     boxShadow: 8,
                   },
                 }}
               >
                 <CardMedia
-                  component="img"
+                  component='img'
                   sx={{
-                    width: "100%",
+                    width: '100%',
                     height: 150,
-                    objectFit: "contain",
-                    backgroundColor: "white",
-                    transition: "transform 0.3s ease",
-                    "&:hover": {
-                      transform: "scale(1.03)",
+                    objectFit: 'contain',
+                    backgroundColor: 'white',
+                    transition: 'transform 0.3s ease',
+                    '&:hover': {
+                      transform: 'scale(1.03)',
                     },
                   }}
                   image={product.image}
@@ -198,44 +236,44 @@ function ProductShowcase({ category }) {
                 <CardContent
                   sx={{
                     flexGrow: 1,
-                    textAlign: "center",
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "space-between",
+                    textAlign: 'center',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
                     p: 2,
                     boxShadow: 4,
-                    borderRadius: "12px",
-                    bgcolor: "background.paper",
+                    borderRadius: '12px',
+                    bgcolor: 'background.paper',
                   }}
                 >
                   <Typography
                     gutterBottom
-                    variant="h6"
-                    component="div"
+                    variant='h6'
+                    component='div'
                     sx={{
-                      color: "text.primary",
-                      fontWeight: "bold",
+                      color: 'text.primary',
+                      fontWeight: 'bold',
                       mb: 1,
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      fontSize: { xs: "1rem", sm: "1.2rem" },
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      fontSize: { xs: '1rem', sm: '1.2rem' },
                     }}
                   >
                     <span
                       style={{
-                        fontSize: "0.8rem",
-                        fontWeight: "500",
-                        color: "#888",
-                        background: "linear-gradient(45deg, #f3ec78, #af4261)",
-                        WebkitBackgroundClip: "text",
-                        WebkitTextFillColor: "transparent",
-                        padding: "0.2em 0.4em",
-                        borderRadius: "4px",
-                        whiteSpace: "nowrap", // Ensures the text remains on a single line
-                        overflow: "hidden", // Hides any overflow content
-                        textOverflow: "ellipsis", // Adds "..." if the text is too long
-                        maxWidth: "100%", // Ensures it fits within its container
-                        display: "inline-block", // Makes sure it behaves correctly inside a flexbox
+                        fontSize: '0.8rem',
+                        fontWeight: '500',
+                        color: '#888',
+                        background: 'linear-gradient(45deg, #f3ec78, #af4261)',
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                        padding: '0.2em 0.4em',
+                        borderRadius: '4px',
+                        whiteSpace: 'nowrap', // Ensures the text remains on a single line
+                        overflow: 'hidden', // Hides any overflow content
+                        textOverflow: 'ellipsis', // Adds "..." if the text is too long
+                        maxWidth: '100%', // Ensures it fits within its container
+                        display: 'inline-block', // Makes sure it behaves correctly inside a flexbox
                       }}
                     >
                       {product.model}
@@ -244,39 +282,39 @@ function ProductShowcase({ category }) {
 
                   <Box
                     sx={{
-                      display: "flex",
-                      flexDirection: { xs: "column", sm: "row" },
-                      justifyContent: { sm: "space-between" },
-                      alignItems: "center",
+                      display: 'flex',
+                      flexDirection: { xs: 'column', sm: 'row' },
+                      justifyContent: { sm: 'space-between' },
+                      alignItems: 'center',
                       mt: 1,
                     }}
                   >
                     <Typography
-                      variant="h6"
-                      color="primary"
+                      variant='h6'
+                      color='primary'
                       sx={{
-                        fontWeight: "bold",
-                        fontSize: { xs: "1rem", sm: "1.2rem" },
+                        fontWeight: 'bold',
+                        fontSize: { xs: '1rem', sm: '1.2rem' },
                       }}
                     >
                       ₹{parseFloat(product.price).toFixed(2)}
                     </Typography>
                     {product.discountPrice > 0 && (
                       <Typography
-                        variant="body2"
-                        color="error"
+                        variant='body2'
+                        color='error'
                         sx={{
-                          fontWeight: "bold",
-                          textDecoration: "line-through",
+                          fontWeight: 'bold',
+                          textDecoration: 'line-through',
                           mx: { xs: 0, sm: 1 },
                           mt: { xs: 0.5, sm: 0 },
-                          fontSize: { xs: "0.9rem", sm: "1rem" },
+                          fontSize: { xs: '0.9rem', sm: '1rem' },
                         }}
                       >
                         ₹{parseFloat(product.discountPrice).toFixed(2)}
                       </Typography>
                     )}
-                    {product.discountPrice > 0 && (
+                    {/* {product.discountPrice > 0 && (
                       <Typography
                         variant="body2"
                         sx={{
@@ -294,26 +332,43 @@ function ProductShowcase({ category }) {
                           product.discountPrice - product.price
                         ).toFixed(0)}
                       </Typography>
-                    )}
+                    )} */}
                   </Box>
                   <Button
-                    variant="contained"
+                    variant='contained'
                     onClick={(e) => handleAddToCart(e, product)}
+                    disabled={!product.inStock || addingToCart}
                     sx={{
                       mt: 2,
-                      bgcolor: "secondary.main",
-                      color: "secondary.contrastText",
-                      fontSize: { xs: "0.5rem", sm: "1rem" },
+                      bgcolor: 'secondary.main',
+                      color: 'secondary.contrastText',
+                      fontSize: { xs: '0.5rem', sm: '1rem' },
                       py: { xs: 1, sm: 1.5 },
-                      width: { xs: "100%", sm: "auto" },
+                      width: { xs: '100%', sm: 'auto' },
                       boxShadow: 3,
-                      "&:hover": {
-                        bgcolor: "secondary.dark",
+                      '&:hover': {
+                        bgcolor: 'secondary.dark',
                       },
                     }}
                   >
-                    Add to Cart
+                      {addingToCart ? (
+                        <>
+                          <CircularProgress
+                            size={24}
+                            sx={{
+                              position: 'absolute',
+                              left: '50%',
+                              marginLeft: '-12px',
+                            }}
+                          />
+                          <span style={{ opacity: 0 }}>Add to Cart</span>
+                        </>
+                      ) : (
+                        'Add to Cart'
+                      )}
                   </Button>
+
+                
                 </CardContent>
               </Card>
             </motion.div>

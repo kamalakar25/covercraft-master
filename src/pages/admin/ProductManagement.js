@@ -1,51 +1,53 @@
-import React, { useState } from "react";
-import {
-  Box,
-  Typography,
-  TextField,
-  Button,
-  Grid,
-  Paper,
-  Switch,
-  FormControlLabel,
-  Container,
-  useTheme,
-  useMediaQuery,
-  CircularProgress,
-  Snackbar,
-  Alert,
-  InputAdornment,
-  IconButton,
-} from "@mui/material";
 import {
   Add as AddIcon,
-  Image as ImageIcon,
   Clear as ClearIcon,
-} from "@mui/icons-material";
+  Image as ImageIcon,
+} from '@mui/icons-material';
+import {
+  Alert,
+  Box,
+  Button,
+  CircularProgress,
+  Container,
+  FormControl,
+  FormControlLabel,
+  Grid,
+  IconButton,
+  InputAdornment,
+  InputLabel,
+  MenuItem,
+  Paper,
+  Select,
+  Snackbar,
+  Switch,
+  TextField,
+  Typography,
+  useMediaQuery,
+  useTheme,
+} from '@mui/material';
+import React, { useState } from 'react';
 
-const API_BASE_URL =
-  process.env.REACT_APP_API_URL;
-
+const API_BASE_URL = process.env.REACT_APP_API_URL;
 
 const ProductManagement = () => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-  const isTablet = useMediaQuery(theme.breakpoints.down("md"));
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isTablet = useMediaQuery(theme.breakpoints.down('md'));
 
   const [loading, setLoading] = useState(false);
   const [snackbar, setSnackbar] = useState({
     open: false,
-    message: "",
-    severity: "success",
+    message: '',
+    severity: 'success',
   });
   const [formData, setFormData] = useState({
-    name: "",
-    model: "",
-    image: "",
-    description: "",
-    price: "",
-    discountPrice: "",
-    category: "",
+    name: '',
+    model: '',
+    image: '',
+    description: '',
+    price: '',
+    discountPrice: '',
+    category: '',
     inStock: true,
     rating: 4.5,
     reviews: 0,
@@ -68,13 +70,13 @@ const ProductManagement = () => {
 
   const resetForm = () => {
     setFormData({
-      name: "",
-      model: "",
-      image: "",
-      description: "",
-      price: "",
-      discountPrice: "",
-      category: "",
+      name: '',
+      model: '',
+      image: '',
+      description: '',
+      price: '',
+      discountPrice: '',
+      category: '',
       inStock: true,
       rating: 4.5,
       reviews: 0,
@@ -87,28 +89,28 @@ const ProductManagement = () => {
 
     try {
       const response = await fetch(`${API_BASE_URL}/add-products`, {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify([formData]),
       });
 
       if (!response.ok) {
-        throw new Error("Failed to add product");
+        throw new Error('Failed to add product');
       }
 
       setSnackbar({
         open: true,
-        message: "Product added successfully!",
-        severity: "success",
+        message: 'Product added successfully!',
+        severity: 'success',
       });
       resetForm();
     } catch (error) {
       setSnackbar({
         open: true,
         message: error.message,
-        severity: "error",
+        severity: 'error',
       });
     } finally {
       setLoading(false);
@@ -120,7 +122,7 @@ const ProductManagement = () => {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 3, md: 4 } }}>
+    <Container maxWidth='lg' sx={{ py: { xs: 2, sm: 3, md: 4 } }}>
       <Paper
         elevation={3}
         sx={{
@@ -131,12 +133,12 @@ const ProductManagement = () => {
       >
         <Box sx={{ mb: { xs: 2, sm: 3, md: 4 } }}>
           <Typography
-            variant={isMobile ? "h5" : "h4"}
-            component="h1"
+            variant={isMobile ? 'h5' : 'h4'}
+            component='h1'
             gutterBottom
             sx={{
-              fontWeight: "bold",
-              textAlign: "center",
+              fontWeight: 'bold',
+              textAlign: 'center',
               color: theme.palette.primary.main,
             }}
           >
@@ -149,10 +151,10 @@ const ProductManagement = () => {
             {/* Basic Information Section */}
             <Grid item xs={12}>
               <Typography
-                variant="h6"
+                variant='h6'
                 sx={{
                   mb: 2,
-                  fontSize: { xs: "1rem", sm: "1.25rem" },
+                  fontSize: { xs: '1rem', sm: '1.25rem' },
                 }}
               >
                 Basic Information
@@ -162,24 +164,24 @@ const ProductManagement = () => {
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="Product Name"
-                name="name"
+                label='Product Name'
+                name='name'
                 value={formData.name}
                 onChange={handleInputChange}
                 required
-                size={isMobile ? "small" : "medium"}
+                size={isMobile ? 'small' : 'medium'}
               />
             </Grid>
 
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="Model"
-                name="model"
+                label='Brand & Model'
+                name='model'
                 value={formData.model}
                 onChange={handleInputChange}
                 required
-                size={isMobile ? "small" : "medium"}
+                size={isMobile ? 'small' : 'medium'}
               />
             </Grid>
 
@@ -187,79 +189,118 @@ const ProductManagement = () => {
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="After Discount Price"
-                name="price"
-                type="number"
+                label='Display Price'
+                name='price'
+                type='number'
                 value={formData.price}
                 onChange={handleInputChange}
                 required
+                placeholder="Ex: 899"
                 InputProps={{
                   startAdornment: (
-                    <InputAdornment position="start">₹</InputAdornment>
+                    <InputAdornment position='start'>₹</InputAdornment>
                   ),
                 }}
-                size={isMobile ? "small" : "medium"}
+                size={isMobile ? 'small' : 'medium'}
               />
             </Grid>
 
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="Total Price"
-                name="discountPrice"
-                type="number"
+                label='Strike off Price'
+                name='discountPrice'
+                type='number'
+                placeholder="Ex: 1199"
                 value={formData.discountPrice}
                 onChange={handleInputChange}
                 InputProps={{
                   startAdornment: (
-                    <InputAdornment position="start">₹</InputAdornment>
+                    <InputAdornment position='start'>₹</InputAdornment>
                   ),
                 }}
-                size={isMobile ? "small" : "medium"}
+                size={isMobile ? 'small' : 'medium'}
               />
             </Grid>
 
-            {/* Category and Image Section */}
             <Grid item xs={12} sm={6}>
-              <TextField
+              <FormControl
                 fullWidth
-                label="Category"
-                name="category"
-                value={formData.category}
-                onChange={handleInputChange}
                 required
-                size={isMobile ? "small" : "medium"}
-              />
+                size={isMobile ? 'small' : 'medium'}
+              >
+                <InputLabel
+                  sx={{ color: '#000', '&.Mui-focused': { color: '#6C63FF' } }}
+                >
+                  Category
+                </InputLabel>
+                <Select
+                  name='category'
+                  value={formData.category}
+                  onChange={handleInputChange}
+                  displayEmpty
+                  sx={{
+                    '& .MuiOutlinedInput-notchedOutline': { border: 'none' }, // Removes border
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      border: 'none',
+                    }, // No border on hover
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      border: 'none',
+                    }, // No border when focused
+                    backgroundColor: '#fff', // Ensures good contrast
+                  }}
+                >
+                  {/* Available Categories */}
+                  <MenuItem value='Mobile'>📱 Mobile</MenuItem>
+                  <MenuItem value='Tablet'>📟 Tablet</MenuItem>
+
+                  {/* Unavailable Categories with Strikethrough */}
+                  <MenuItem
+                    value='Laptop'
+                    disabled
+                    sx={{ textDecoration: 'line-through', color: 'gray' }}
+                  >
+                    💻 Laptop (Out of Stock)
+                  </MenuItem>
+                  <MenuItem
+                    value='Smartwatch'
+                    disabled
+                    sx={{ textDecoration: 'line-through', color: 'gray' }}
+                  >
+                    ⌚ Smartwatch (Coming Soon)
+                  </MenuItem>
+                </Select>
+              </FormControl>
             </Grid>
 
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="Image URL"
-                name="image"
+                label='Image URL'
+                name='image'
                 value={formData.image}
                 onChange={handleInputChange}
                 required
                 InputProps={{
                   endAdornment: formData.image && (
-                    <InputAdornment position="end">
+                    <InputAdornment position='end'>
                       <IconButton
                         onClick={() =>
-                          setFormData((prev) => ({ ...prev, image: "" }))
+                          setFormData((prev) => ({ ...prev, image: '' }))
                         }
-                        edge="end"
+                        edge='end'
                       >
                         <ClearIcon />
                       </IconButton>
                     </InputAdornment>
                   ),
                   startAdornment: (
-                    <InputAdornment position="start">
+                    <InputAdornment position='start'>
                       <ImageIcon />
                     </InputAdornment>
                   ),
                 }}
-                size={isMobile ? "small" : "medium"}
+                size={isMobile ? 'small' : 'medium'}
               />
             </Grid>
 
@@ -267,14 +308,14 @@ const ProductManagement = () => {
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Description"
-                name="description"
+                label='Description'
+                name='description'
                 value={formData.description}
                 onChange={handleInputChange}
                 required
                 multiline
                 rows={4}
-                size={isMobile ? "small" : "medium"}
+                size={isMobile ? 'small' : 'medium'}
               />
             </Grid>
 
@@ -285,10 +326,10 @@ const ProductManagement = () => {
                   <Switch
                     checked={formData.inStock}
                     onChange={handleStockToggle}
-                    color="primary"
+                    color='primary'
                   />
                 }
-                label="In Stock"
+                label='In Stock'
               />
             </Grid>
 
@@ -296,33 +337,33 @@ const ProductManagement = () => {
             <Grid item xs={12}>
               <Box
                 sx={{
-                  display: "flex",
+                  display: 'flex',
                   gap: 2,
-                  flexDirection: isMobile ? "column" : "row",
-                  justifyContent: "flex-end",
+                  flexDirection: isMobile ? 'column' : 'row',
+                  justifyContent: 'flex-end',
                   mt: 2,
                 }}
               >
                 <Button
-                  variant="outlined"
+                  variant='outlined'
                   onClick={resetForm}
                   disabled={loading}
                   fullWidth={isMobile}
-                  sx={{ minWidth: { sm: "120px" } }}
+                  sx={{ minWidth: { sm: '120px' } }}
                 >
                   Reset
                 </Button>
                 <Button
-                  type="submit"
-                  variant="contained"
+                  type='submit'
+                  variant='contained'
                   disabled={loading}
                   fullWidth={isMobile}
-                  sx={{ minWidth: { sm: "120px" } }}
+                  sx={{ minWidth: { sm: '120px' } }}
                   startIcon={
                     loading ? <CircularProgress size={20} /> : <AddIcon />
                   }
                 >
-                  {loading ? "Adding..." : "Add Product"}
+                  {loading ? 'Adding...' : 'Add Product'}
                 </Button>
               </Box>
             </Grid>
@@ -330,7 +371,7 @@ const ProductManagement = () => {
         </form>
 
         {/* Preview Section */}
-        {formData.image && (
+        {/* {formData.image && (
           <Box
             sx={{
               mt: 4,
@@ -360,7 +401,7 @@ const ProductManagement = () => {
               }}
             />
           </Box>
-        )}
+        )} */}
       </Paper>
 
       {/* Snackbar for notifications */}
@@ -368,12 +409,12 @@ const ProductManagement = () => {
         open={snackbar.open}
         autoHideDuration={6000}
         onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       >
         <Alert
           onClose={handleCloseSnackbar}
           severity={snackbar.severity}
-          sx={{ width: "100%" }}
+          sx={{ width: '100%' }}
         >
           {snackbar.message}
         </Alert>

@@ -264,7 +264,7 @@ function ProductDetail() {
                     precision={0.5}
                   />
                   <Typography variant="body2" color="text.secondary">
-                    ({product.reviews || 0} reviews)
+                    ({product.reviews || 12} reviews)
                   </Typography>
                 </Box>
 

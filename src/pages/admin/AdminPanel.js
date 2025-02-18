@@ -29,7 +29,7 @@ function AdminPanel() {
   const isMobile = useMediaQuery('(max-width: 768px)');
   const isSmallScreen = useMediaQuery('(max-width: 480px)');
 
-  const API_BASE_URL = process.env.REACT_APP_API_URL;
+  const API_BASE_URL = process.env.REACT_APP_API_URL || "https://covercraft-backend.onrender.com/api";
 
   useEffect(() => {
     const fetchOrders = async () => {

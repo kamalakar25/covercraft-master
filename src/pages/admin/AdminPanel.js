@@ -28,7 +28,7 @@ function AdminPanel() {
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   const API_BASE_URL =
-    process.env.REACT_APP_API_URL || "https://covercraft-backend.onrender.com/api";
+    process.env.REACT_APP_API_URL;
 
   // In your AdminPanel component, update the useEffect hook:
   useEffect(() => {

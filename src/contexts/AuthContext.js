@@ -10,8 +10,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
 const API_URL =
-  process.env.REACT_APP_API_URL ||
-  "https://covercraft-backend.onrender.com/api";
+  process.env.REACT_APP_API_URL;
 
 const AuthContext = createContext(null);
 
@@ -21,7 +20,7 @@ export const AuthProvider = ({ children }) => {
   const inactivityTimeoutRef = useRef(null);
   const navigate = useNavigate();
 
-  const INACTIVITY_TIMEOUT = 120000; // 2 minutes (5min = 300,000ms)
+  const INACTIVITY_TIMEOUT = 1200000; // 2 minutes (5min = 300,000ms)
 
   // Login function
   const login = async (email, password) => {

@@ -20,15 +20,15 @@ import {
   Divider,
   useTheme,
   useMediaQuery,
-  CircularProgress,
+  CircularProgress, TableContainer,Table, TableHead, TableRow, TableCell, TableBody
 } from "@mui/material"
 import { ThemeProvider, createTheme } from "@mui/material/styles"
 import { useNavigate } from "react-router-dom"
 import axios from "axios"
 import { toast } from "react-toastify"
 
-// const API_BASE_URL = process.env.REACT_APP_API_URL || "https://covercraft-backend.onrender.com/api"
-const API_BASE_URL="https://covercraft-backend.onrender.com/api"
+const API_BASE_URL = process.env.REACT_APP_API_URL;
+// const API_BASE_URL="https://covercraft-backend.onrender.com/api"
 // const API_BASE_URL = "http://localhost:5000/api"
 
 // Enhanced dark theme
@@ -144,12 +144,12 @@ export default function MultiStepCheckoutForm({ totalPrice, onClose }) {
   // Validation patterns
   const patterns = {
     name: /^[a-zA-Z\s]{2,50}$/,
-    email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+    email: /^[^\s@]+@[a-zA-Z]+\.[a-zA-Z]+$/,
     phone: /^[6-9]\d{9}$/,
     zipCode: /^[\d]{6}$/,
     cardNumber: /^[\d]{16}$/,
     cardExpiry: /^(0[1-9]|1[0-2])\/([0-9]{2})$/,
-    cardCvc: /^[\d]{3,4}$/,
+    cardCvc: /^[\d]{3}$/,
   }
 
   // Error messages
@@ -163,7 +163,7 @@ export default function MultiStepCheckoutForm({ totalPrice, onClose }) {
     zipCode: "ZIP code must be 6 digits",
     cardNumber: "Card number must be 16 digits",
     cardExpiry: "Invalid expiry date (MM/YY)",
-    cardCvc: "CVC must be 3 or 4 digits",
+    cardCvc: "CVV must be 3 digits",
   }
 
   const validateField = (name, value) => {
@@ -174,13 +174,15 @@ export default function MultiStepCheckoutForm({ totalPrice, onClose }) {
     if (name === "address" && value.length < 10) return errorMessages.address
     if (name === "cardExpiry") {
       const [month, year] = value.split("/")
-      const expiryDate = new Date(2000 + Number.parseInt(year), Number.parseInt(month) - 1)
+      const expiryDate = new Date(2000 + Number.parseInt(year), Number.parseInt(month) - 0)
       if (expiryDate <= new Date()) {
         return "Expiry date must be in the future"
       }
     }
     return ""
   }
+
+ 
 
   const handleBlur = (field) => {
     setTouched((prev) => ({ ...prev, [field]: true }))
@@ -229,6 +231,8 @@ export default function MultiStepCheckoutForm({ totalPrice, onClose }) {
     setErrors(newErrors)
     return isValid
   }
+
+  
 
   const handleNext = () => {
     if (step === 1 && !validateStep(1)) return
@@ -431,8 +435,8 @@ export default function MultiStepCheckoutForm({ totalPrice, onClose }) {
       <CardContent
         sx={{
           p: { xs: 2, sm: 3, md: 4 },
-          minHeight: { xs: "100vh", sm: "auto" },
-          maxHeight: { xs: "100vh", sm: "none" },
+          minHeight: { xs: "auto", sm: "auto" },
+          maxHeight: { xs: "auto", sm: "none" },
           overflowY: "scroll",
           scrollbarWidth: "thin",
           scrollbarColor: "cyan black",
@@ -534,7 +538,7 @@ export default function MultiStepCheckoutForm({ totalPrice, onClose }) {
           }}
         >
           <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-            Step {step} of {formData.paymentMethod === "card" ? "5" : "4"}
+            Step {step} of {formData.paymentMethod === "card" ? "6" : "4"}
           </Typography>
         </Box>
 
@@ -557,7 +561,11 @@ export default function MultiStepCheckoutForm({ totalPrice, onClose }) {
                     gap: { xs: 2, sm: 3 },
                   }}
                 >
-                  <Typography variant="h5" gutterBottom style={{ color: "white" }}>
+                  <Typography
+                    variant="h5"
+                    gutterBottom
+                    style={{ color: "white" }}
+                  >
                     Personal Details
                   </Typography>
                   <TextField
@@ -656,19 +664,29 @@ export default function MultiStepCheckoutForm({ totalPrice, onClose }) {
             {step === 2 && (
               <motion.div variants={fadeInUp}>
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                  <Typography variant="h5" gutterBottom style={{ color: "white" }}>
+                  <Typography
+                    variant="h5"
+                    gutterBottom
+                    style={{ color: "white" }}
+                  >
                     Payment Method
                   </Typography>
-                  <FormControl component="fieldset" error={!!errors.paymentMethod}>
+                  <FormControl
+                    component="fieldset"
+                    error={!!errors.paymentMethod}
+                  >
                     <RadioGroup
                       name="paymentMethod"
                       value={formData.paymentMethod}
                       onChange={(e) => {
-                        handleInputChange(e)
-                        setErrors((prev) => ({ ...prev, paymentMethod: "" }))
+                        handleInputChange(e);
+                        setErrors((prev) => ({ ...prev, paymentMethod: "" }));
                       }}
                     >
-                      <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                      <motion.div
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
                         <Paper
                           sx={{
                             mb: 2,
@@ -678,7 +696,9 @@ export default function MultiStepCheckoutForm({ totalPrice, onClose }) {
                               bgcolor: "action.hover",
                             },
                             border: errors.paymentMethod ? "1px solid" : "none",
-                            borderColor: errors.paymentMethod ? "error.main" : "transparent",
+                            borderColor: errors.paymentMethod
+                              ? "error.main"
+                              : "transparent",
                           }}
                         >
                           <FormControlLabel
@@ -695,7 +715,10 @@ export default function MultiStepCheckoutForm({ totalPrice, onClose }) {
                                 <LocalShipping />
                                 <Box>
                                   <Typography>Cash on Delivery</Typography>
-                                  <Typography variant="caption" color="text.secondary">
+                                  <Typography
+                                    variant="caption"
+                                    color="text.secondary"
+                                  >
                                     Pay when you receive
                                   </Typography>
                                 </Box>
@@ -704,7 +727,10 @@ export default function MultiStepCheckoutForm({ totalPrice, onClose }) {
                           />
                         </Paper>
                       </motion.div>
-                      <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                      <motion.div
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
                         <Paper
                           sx={{
                             p: { xs: 2, sm: 3 },
@@ -713,7 +739,9 @@ export default function MultiStepCheckoutForm({ totalPrice, onClose }) {
                               bgcolor: "action.hover",
                             },
                             border: errors.paymentMethod ? "1px solid" : "none",
-                            borderColor: errors.paymentMethod ? "error.main" : "transparent",
+                            borderColor: errors.paymentMethod
+                              ? "error.main"
+                              : "transparent",
                           }}
                         >
                           <FormControlLabel
@@ -730,7 +758,10 @@ export default function MultiStepCheckoutForm({ totalPrice, onClose }) {
                                 <CreditCard />
                                 <Box>
                                   <Typography>Credit/Debit Card</Typography>
-                                  <Typography variant="caption" color="text.secondary">
+                                  <Typography
+                                    variant="caption"
+                                    color="text.secondary"
+                                  >
                                     Secure online payment
                                   </Typography>
                                 </Box>
@@ -767,12 +798,22 @@ export default function MultiStepCheckoutForm({ totalPrice, onClose }) {
               </motion.div>
             )}
 
-            {step === 3 && formData.paymentMethod === "card" && renderCardTypeSelection()}
+            {step === 3 &&
+              formData.paymentMethod === "card" &&
+              renderCardTypeSelection()}
 
             {step === 4 && formData.paymentMethod === "card" && (
               <motion.div variants={fadeInUp}>
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                  <Typography variant="h5" gutterBottom style={{ color: "white" }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 3,
+                    maxHeight: "calc(100vh - 150px)", // Restrict max height to prevent scroll
+                    overflow: "hidden", // Ensures no unnecessary scrolling
+                  }}
+                >
+                  <Typography variant="h5" gutterBottom sx={{ color: "white" }}>
                     Card Details
                   </Typography>
                   <TextField
@@ -792,6 +833,7 @@ export default function MultiStepCheckoutForm({ totalPrice, onClose }) {
                       display: "grid",
                       gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
                       gap: 2,
+                      width: "100%",
                     }}
                   >
                     <TextField
@@ -807,7 +849,7 @@ export default function MultiStepCheckoutForm({ totalPrice, onClose }) {
                       size={isMobile ? "small" : "medium"}
                     />
                     <TextField
-                      label="CVC"
+                      label="CVV"
                       name="cardCvc"
                       value={formData.cardCvc}
                       onChange={handleInputChange}
@@ -815,7 +857,7 @@ export default function MultiStepCheckoutForm({ totalPrice, onClose }) {
                       error={!!errors.cardCvc}
                       helperText={errors.cardCvc}
                       type="password"
-                      inputProps={{ maxLength: 4 }}
+                      inputProps={{ maxLength: 3 }}
                       size={isMobile ? "small" : "medium"}
                     />
                   </Box>
@@ -827,7 +869,11 @@ export default function MultiStepCheckoutForm({ totalPrice, onClose }) {
               (step === 5 && formData.paymentMethod === "card")) && (
               <motion.div variants={fadeInUp}>
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                  <Typography variant="h5" gutterBottom style={{ color: "white" }}>
+                  <Typography
+                    variant="h5"
+                    gutterBottom
+                    style={{ color: "white" }}
+                  >
                     Confirm Order
                   </Typography>
                   <Paper sx={{ p: { xs: 2, sm: 3 } }}>
@@ -847,7 +893,9 @@ export default function MultiStepCheckoutForm({ totalPrice, onClose }) {
                       Payment Method:
                     </Typography>
                     <Typography color="text.secondary">
-                      {formData.paymentMethod === "cod" ? "Cash on Delivery" : `${formData.cardType} Card`}
+                      {formData.paymentMethod === "cod"
+                        ? "Cash on Delivery"
+                        : `${formData.cardType} Card`}
                     </Typography>
                   </Paper>
                 </Box>
@@ -883,7 +931,11 @@ export default function MultiStepCheckoutForm({ totalPrice, onClose }) {
                       <Check sx={{ fontSize: { xs: 30, sm: 40 } }} />
                     </Box>
                   </motion.div>
-                  <Typography variant="h5" gutterBottom style={{ color: "white" }}>
+                  <Typography
+                    variant="h5"
+                    gutterBottom
+                    style={{ color: "white" }}
+                  >
                     Order Confirmed!
                   </Typography>
                   <Typography color="text.secondary" paragraph>
@@ -893,32 +945,65 @@ export default function MultiStepCheckoutForm({ totalPrice, onClose }) {
                     sx={{
                       p: { xs: 2, sm: 3 },
                       mt: 3,
-                      background: "linear-gradient(145deg, rgba(187, 134, 252, 0.1), rgba(3, 218, 198, 0.1))",
+                      background:
+                        "linear-gradient(145deg, rgba(187, 134, 252, 0.1), rgba(3, 218, 198, 0.1))",
                     }}
                   >
                     <Typography variant="h6" gutterBottom>
                       Order Summary
                     </Typography>
-                    {cart?.items?.map((item) => (
-                      <Box
-                        key={item.productId._id}
-                        sx={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          mb: 1,
-                        }}
-                      >
-                        <Typography>
-                          {item.productId.name} x {item.quantity}
-                        </Typography>
-                        <Typography>₹{(item.productId.price * item.quantity).toFixed(2)}</Typography>
-                      </Box>
-                    ))}
+
+                    <TableContainer
+                      component={Paper}
+                      sx={{ boxShadow: "none", background: "transparent" }}
+                    >
+                      <Table>
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>
+                              <strong>Product</strong>
+                            </TableCell>
+                            <TableCell align="center">
+                              <strong>Quantity</strong>
+                            </TableCell>
+                            <TableCell align="right">
+                              <strong>Price</strong>
+                            </TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {cart?.items?.map((item) => (
+                            <TableRow key={item.productId._id}>
+                              <TableCell>{item.productId.name}</TableCell>
+                              <TableCell align="center">
+                                {item.quantity}
+                              </TableCell>
+                              <TableCell align="right">
+                                ₹
+                                {(item.productId.price * item.quantity).toFixed(
+                                  2
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+
                     <Divider sx={{ my: 2 }} />
-                    <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                      <Typography variant="subtitle1">Total</Typography>
+
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        px: 2,
+                      }}
+                    >
+                      <Typography variant="subtitle1">
+                        <strong>Total</strong>
+                      </Typography>
                       <Typography variant="subtitle1" color="primary">
-                        ₹{totalPrice}
+                        <strong>₹{totalPrice}</strong>
                       </Typography>
                     </Box>
                   </Paper>
@@ -935,13 +1020,22 @@ export default function MultiStepCheckoutForm({ totalPrice, onClose }) {
                 flexDirection: { xs: "column", sm: "row" },
               }}
             >
-              {step > 1 && step < (formData.paymentMethod === "card" ? 6 : 4) && (
-                <Button variant="outlined" onClick={handleBack} fullWidth={isMobile}>
-                  Back
-                </Button>
-              )}
+              {step > 1 &&
+                step < (formData.paymentMethod === "card" ? 6 : 4) && (
+                  <Button
+                    variant="outlined"
+                    onClick={handleBack}
+                    fullWidth={isMobile}
+                  >
+                    Back
+                  </Button>
+                )}
               {step === 1 && (
-                <Button variant="outlined" onClick={onClose} fullWidth={isMobile}>
+                <Button
+                  variant="outlined"
+                  onClick={onClose}
+                  fullWidth={isMobile}
+                >
                   Cancel
                 </Button>
               )}
@@ -951,9 +1045,11 @@ export default function MultiStepCheckoutForm({ totalPrice, onClose }) {
                   onClick={handleNext}
                   fullWidth={isMobile}
                   sx={{
-                    background: "linear-gradient(45deg, #BB86FC 30%, #03DAC6 90%)",
+                    background:
+                      "linear-gradient(45deg, #BB86FC 30%, #03DAC6 90%)",
                     "&:hover": {
-                      background: "linear-gradient(45deg, #9965f4 30%, #02b3a9 90%)",
+                      background:
+                        "linear-gradient(45deg, #9965f4 30%, #02b3a9 90%)",
                     },
                   }}
                 >
@@ -968,25 +1064,37 @@ export default function MultiStepCheckoutForm({ totalPrice, onClose }) {
                   fullWidth={isMobile}
                   disabled={loading}
                   sx={{
-                    background: "linear-gradient(45deg, #BB86FC 30%, #03DAC6 90%)",
+                    background:
+                      "linear-gradient(45deg, #BB86FC 30%, #03DAC6 90%)",
                     "&:hover": {
-                      background: "linear-gradient(45deg, #9965f4 30%, #02b3a9 90%)",
+                      background:
+                        "linear-gradient(45deg, #9965f4 30%, #02b3a9 90%)",
                     },
                   }}
                 >
-                  {loading ? <CircularProgress size={24} color="inherit" /> : "Place Order"}
+                  {loading ? (
+                    <CircularProgress size={24} color="inherit" />
+                  ) : (
+                    "Place Order"
+                  )}
                 </Button>
               )}
               {((step === 4 && formData.paymentMethod === "cod") ||
                 (step === 6 && formData.paymentMethod === "card")) && (
                 <Button
                   variant="contained"
-                  onClick={onClose}
+                  // onClick={onClose}
+                  onClick={() => {
+                    onClose(); // Close the modal or perform the first action
+                    window.location.reload(); // Then reload the page
+                  }}
                   fullWidth={isMobile}
                   sx={{
-                    background: "linear-gradient(45deg, #BB86FC 30%, #03DAC6 90%)",
+                    background:
+                      "linear-gradient(45deg, #BB86FC 30%, #03DAC6 90%)",
                     "&:hover": {
-                      background: "linear-gradient(45deg, #9965f4 30%, #02b3a9 90%)",
+                      background:
+                        "linear-gradient(45deg, #9965f4 30%, #02b3a9 90%)",
                     },
                   }}
                 >
@@ -998,6 +1106,6 @@ export default function MultiStepCheckoutForm({ totalPrice, onClose }) {
         </AnimatePresence>
       </CardContent>
     </ThemeProvider>
-  )
+  );
 }
 

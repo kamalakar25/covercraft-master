@@ -15,13 +15,16 @@ import {
 } from "@mui/material";
 import { motion } from "framer-motion";
 import {
-  DoorClosedIcon as CloseIcon,
+
+ X as CloseIcon,
   MenuIcon,
   ShoppingCart,
 } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import axios from "axios";
+
+const API_BASE_URL = process.env.REACT_APP_API_URL;
 
 function Header(props) {
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -35,7 +38,7 @@ function Header(props) {
 
     try {
       const response = await axios.get(
-        `https://covercraft-backend.onrender.com/api/cart/${currentUser.id}`
+        `${API_BASE_URL}/cart/${currentUser.id}`
       );
       const cartItems = response.data.items || [];
       const itemCount = cartItems.reduce(

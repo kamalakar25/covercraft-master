@@ -18,7 +18,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const API_BASE_URL =
-  process.env.REACT_APP_API_URL || "https://covercraft-backend.onrender.com/api" ; // http://localhost:5000/api/ 
+  process.env.REACT_APP_API_URL; // http://localhost:5000/api/ 
 
 function ProductShowcase({ category }) {
   const navigate = useNavigate();
@@ -191,9 +191,7 @@ function ProductShowcase({ category }) {
                       transform: "scale(1.03)",
                     },
                   }}
-                  image={
-                    product.image
-                  }
+                  image={product.image}
                   alt={product.name}
                 />
 
@@ -233,6 +231,11 @@ function ProductShowcase({ category }) {
                         WebkitTextFillColor: "transparent",
                         padding: "0.2em 0.4em",
                         borderRadius: "4px",
+                        whiteSpace: "nowrap", // Ensures the text remains on a single line
+                        overflow: "hidden", // Hides any overflow content
+                        textOverflow: "ellipsis", // Adds "..." if the text is too long
+                        maxWidth: "100%", // Ensures it fits within its container
+                        display: "inline-block", // Makes sure it behaves correctly inside a flexbox
                       }}
                     >
                       {product.model}

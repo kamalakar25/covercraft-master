@@ -24,7 +24,7 @@ import {
 } from "@mui/icons-material";
 
 const API_BASE_URL =
-  process.env.REACT_APP_API_URL || "https://covercraft-backend.onrender.com/api";
+  process.env.REACT_APP_API_URL;
 
 
 const ProductManagement = () => {
@@ -187,7 +187,7 @@ const ProductManagement = () => {
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="Price"
+                label="After Discount Price"
                 name="price"
                 type="number"
                 value={formData.price}
@@ -195,7 +195,7 @@ const ProductManagement = () => {
                 required
                 InputProps={{
                   startAdornment: (
-                    <InputAdornment position="start">$</InputAdornment>
+                    <InputAdornment position="start">₹</InputAdornment>
                   ),
                 }}
                 size={isMobile ? "small" : "medium"}
@@ -205,14 +205,14 @@ const ProductManagement = () => {
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="Discount Price"
+                label="Total Price"
                 name="discountPrice"
                 type="number"
                 value={formData.discountPrice}
                 onChange={handleInputChange}
                 InputProps={{
                   startAdornment: (
-                    <InputAdornment position="start">$</InputAdornment>
+                    <InputAdornment position="start">₹</InputAdornment>
                   ),
                 }}
                 size={isMobile ? "small" : "medium"}

@@ -106,6 +106,7 @@ function CustomerReviews() {
                     fontStyle: "italic",
                     maxWidth: "80%",
                     margin: "0 auto",
+                    paddingBottom: "20px"
                   }}
                 >
                   "{review.comment}"

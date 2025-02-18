@@ -100,7 +100,13 @@ const Login = () => {
   return (
     <AuthLayout>
       <motion.div initial="hidden" animate="visible" variants={formAnimation}>
-        <Typography component="h1" variant="h4" gutterBottom align="center">
+        <Typography
+          component="h1"
+          variant="h4"
+          gutterBottom
+          align="center"
+          style={{ fontStyle: "italic", fontWeight: "bold" }}
+        >
           Log In
         </Typography>
 

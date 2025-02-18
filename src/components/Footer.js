@@ -160,7 +160,7 @@ function Footer() {
             </Typography>
             . All rights reserved.
           </Typography>
-          <Typography variant='body2' sx={{ mt: 1 }}>
+          {/* <Typography variant='body2' sx={{ mt: 1 }}>
             <Link href='#' color='inherit' underline='hover'>
               Privacy Policy
             </Link>{' '}
@@ -168,7 +168,7 @@ function Footer() {
             <Link href='#' color='inherit' underline='hover'>
               Terms of Service
             </Link>
-          </Typography>
+          </Typography> */}
         </motion.div>
       </Box>
     </Box>

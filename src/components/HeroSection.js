@@ -154,7 +154,7 @@ function HeroSection() {
                   alignItems: "center",
                   color: "white",
                   padding: "2rem",
-                  height: "80vh"
+                  minHeight: "100vh"
                 }}
               >
                 <Typography
@@ -222,7 +222,7 @@ function HeroSection() {
             onClick={() => sliderRef.current.slickPrev()}
             variant="contained"
             sx={{
-              backgroundColor: "rgba(0, 0, 0, 0.6)",
+              backgroundColor: "transparent",  //"rgba(0, 0, 0, 0.6)",
               color: "white",
               "&:hover": { backgroundColor: "rgba(0, 0, 0, 0.8)" },
             }}
@@ -243,7 +243,7 @@ function HeroSection() {
             onClick={() => sliderRef.current.slickNext()}
             variant="contained"
             sx={{
-              backgroundColor: "rgba(0, 0, 0, 0.6)",
+              backgroundColor:"transparent",  // "rgba(0, 0, 0, 0.6)",
               color: "white",
               "&:hover": { backgroundColor: "rgba(0, 0, 0, 0.8)" },
             }}

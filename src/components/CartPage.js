@@ -21,7 +21,7 @@ import Header from "./Header.js";
 import axios from "axios";
 import { toast } from "react-toastify";
 
-const API_BASE_URL = "https://covercraft-backend.onrender.com/api";
+const API_BASE_URL =process.env.REACT_APP_API_URL; // "https://covercraft-backend.onrender.com/api"
 
 function CartPage() {
   const [cart, setCart] = useState({ items: [] });
@@ -134,14 +134,25 @@ function CartPage() {
   return (
     <>
       <Header />
-      <Container maxWidth="md">
+      <div className="container-fuild" style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight:  "100vh",
+        background: "linear-gradient(45deg, #1a1a1a 0%, #2d2d2d 100%)",
+      }}>
         <Paper
           elevation={3}
           sx={{
-            p: { xs: 2, sm: 3 },
-            mt: { xs: 5, sm: 10 },
+            p: { xs: 2, sm: 4, md: 5 }, // More padding on larger screens
+            mt: { xs: 8, sm: 12, md: 15 }, // Increased margin-top for header gap
             bgcolor: "background.paper",
-            width: "100%",
+            width: "85%",
+            display: "flex",
+            flexDirection: "column",
+            marginBottom: "30px",
+            gap: { xs: 2, sm: 3, md: 4 }, // Adds gap between child elements inside Paper
           }}
         >
           <Typography
@@ -265,7 +276,7 @@ function CartPage() {
             onClose={() => setIsCheckoutOpen(false)}
           />
         </Dialog>
-      </Container>
+      </div>
     </>
   );
 }
